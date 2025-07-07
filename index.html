@@ -1,109 +1,211 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Welcome | Dinesh Dashboard</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      padding: 0;
-      height: 100vh;
-      background: linear-gradient(to right, #1f1c2c, #928dab);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: 'Segoe UI', sans-serif;
-    }
-
-    .card {
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 20px;
-      padding: 50px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(12px);
-      text-align: center;
-      color: #fff;
-      width: 320px;
-    }
-
-    .card h2 {
-      margin-bottom: 20px;
-    }
-
-    .btn {
-      background-color: #fff;
-      color: #333;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    .btn:hover {
-      background-color: #f1f1f1;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureApp | Premium Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+            --success: #4cc9f0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--light);
+        }
+        
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .logo {
+            width: 80px;
+            margin-bottom: 1.5rem;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+        }
+        
+        h1 {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 1.8rem;
+            background: linear-gradient(to right, #4361ee, #4cc9f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+        
+        .login-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+            margin-bottom: 1.5rem;
+        }
+        
+        .login-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
+        }
+        
+        .login-btn img {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .features {
+            text-align: left;
+            margin-top: 2rem;
+        }
+        
+        .feature {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .feature-icon {
+            margin-right: 10px;
+            color: var(--success);
+        }
+        
+        .footer {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+    </style>
 </head>
 <body>
-  <div class="card">
-    <h2>Dinesh Tools Dashboard</h2>
-    <p>Login with your Google account</p>
-    <button class="btn" onclick="signInWithGoogle()">Continue with Google</button>
-  </div>
+    <div class="login-container">
+        <img src="https://cdn-icons-png.flaticon.com/512/2965/2965300.png" class="logo" alt="SecureApp Logo">
+        <h1>Welcome Back</h1>
+        <p class="subtitle">Securely access your dashboard with Google</p>
+        
+        <button id="google-login" class="login-btn">
+            <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" alt="Google Logo">
+            Continue with Google
+        </button>
+        
+        <div class="features">
+            <div class="feature">
+                <span class="feature-icon">✓</span>
+                <span>Secure end-to-end encryption</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">✓</span>
+                <span>Premium tools access</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">✓</span>
+                <span>24/7 customer support</span>
+            </div>
+        </div>
+        
+        <p class="footer">By continuing, you agree to our Terms and Privacy Policy</p>
+    </div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js"></script>
+    <!-- Firebase Modular SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-analytics.js";
 
-  <!-- Firebase Config + Logic -->
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyB-wOqU0JnvWM3Nt91xhac2x_qO5a54GMQ",
-      authDomain: "dinesh-3b413.firebaseapp.com",
-      projectId: "dinesh-3b413",
-      storageBucket: "dinesh-3b413.firebasestorage.app",
-      messagingSenderId: "1053189064237",
-      appId: "1:1053189064237:web:d261dbebb5e7299e829aa4",
-      measurementId: "G-FPVH4NC1ML"
-    };
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB-wOqU0JnvWM3Nt91xhac2x_qO5a54GMQ",
+            authDomain: "dinesh-3b413.firebaseapp.com",
+            projectId: "dinesh-3b413",
+            storageBucket: "dinesh-3b413.firebasestorage.app",
+            messagingSenderId: "1053189064237",
+            appId: "1:1053189064237:web:d261dbebb5e7299e829aa4",
+            measurementId: "G-FPVH4NC1ML"
+        };
 
-    firebase.initializeApp(firebaseConfig);
-    const provider = new firebase.auth.GoogleAuthProvider();
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const analytics = getAnalytics(app);
 
-    function signInWithGoogle() {
-      firebase.auth().signInWithPopup(provider)
-        .then(result => {
-          const user = result.user;
-          const userData = {
-            name: user.displayName,
-            email: user.email,
-            plan: "free",
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          };
-
-          firebase.firestore().collection("users").doc(user.uid).set(userData, { merge: true })
-            .then(() => {
-              console.log("User logged in");
-              window.location.href = "dashboard.html";
-            })
-            .catch(err => {
-              console.error("Firestore error:", err);
-              alert("Data write failed.");
-            });
-
-        }).catch(error => {
-          console.error("Login Error:", error);
-          alert("Login failed!");
+        // Google Login
+        document.getElementById('google-login').addEventListener('click', async () => {
+            const provider = new GoogleAuthProvider();
+            
+            try {
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+                
+                // Check if user exists in Firestore
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                
+                if (!userDoc.exists()) {
+                    // New user - set default free plan
+                    await setDoc(doc(db, "users", user.uid), {
+                        name: user.displayName,
+                        email: user.email,
+                        plan: "free",
+                        joinDate: new Date(),
+                        lastLogin: new Date()
+                    });
+                }
+                
+                // Redirect to dashboard
+                window.location.href = "dashboard.html";
+                
+            } catch (error) {
+                console.error("Login error:", error);
+                alert(`Login failed: ${error.message}`);
+            }
         });
-    }
-  </script>
+    </script>
 </body>
 </html>
