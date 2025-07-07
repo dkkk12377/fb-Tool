@@ -3,54 +3,59 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login | Firebase Dashboard</title>
+  <title>Welcome | Dinesh Dashboard</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #667eea, #764ba2);
       margin: 0;
       padding: 0;
+      height: 100vh;
+      background: linear-gradient(to right, #1f1c2c, #928dab);
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
-      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
     }
 
-    .login-box {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 40px;
-      border-radius: 16px;
+    .card {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 50px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(12px);
       text-align: center;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-      backdrop-filter: blur(10px);
+      color: #fff;
+      width: 320px;
     }
 
-    .login-box h1 {
+    .card h2 {
       margin-bottom: 20px;
-      font-size: 32px;
     }
 
-    .login-btn {
-      background-color: #ffffff;
+    .btn {
+      background-color: #fff;
+      color: #333;
       border: none;
       padding: 12px 24px;
-      font-size: 16px;
-      color: #333;
       border-radius: 8px;
+      font-size: 16px;
       cursor: pointer;
-      transition: 0.3s ease;
+      transition: 0.3s;
     }
 
-    .login-btn:hover {
+    .btn:hover {
       background-color: #f1f1f1;
     }
   </style>
 </head>
 <body>
-  <div class="login-box">
-    <h1>Welcome to Your Dashboard</h1>
-    <button class="login-btn" onclick="signInWithGoogle()">Login with Google</button>
+  <div class="card">
+    <h2>Dinesh Tools Dashboard</h2>
+    <p>Login with your Google account</p>
+    <button class="btn" onclick="signInWithGoogle()">Continue with Google</button>
   </div>
 
   <!-- Firebase SDKs -->
@@ -58,7 +63,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js"></script>
 
-  <!-- Firebase Config + Login Logic -->
+  <!-- Firebase Config + Logic -->
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyB-wOqU0JnvWM3Nt91xhac2x_qO5a54GMQ",
@@ -69,30 +74,29 @@
       appId: "1:1053189064237:web:d261dbebb5e7299e829aa4",
       measurementId: "G-FPVH4NC1ML"
     };
-    firebase.initializeApp(firebaseConfig);
 
+    firebase.initializeApp(firebaseConfig);
     const provider = new firebase.auth.GoogleAuthProvider();
 
     function signInWithGoogle() {
       firebase.auth().signInWithPopup(provider)
         .then(result => {
           const user = result.user;
-
           const userData = {
             name: user.displayName,
             email: user.email,
-            plan: "free", // default plan
+            plan: "free",
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
           };
 
           firebase.firestore().collection("users").doc(user.uid).set(userData, { merge: true })
             .then(() => {
-              console.log("User logged in and data saved.");
+              console.log("User logged in");
               window.location.href = "dashboard.html";
             })
-            .catch(error => {
-              console.error("Firestore Error:", error);
-              alert("Something went wrong saving your info.");
+            .catch(err => {
+              console.error("Firestore error:", err);
+              alert("Data write failed.");
             });
 
         }).catch(error => {
