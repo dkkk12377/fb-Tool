@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Dashboard | SecureApp</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f5f7fa;
+            color: var(--dark);
+            min-height: 100vh;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            background: var(--dark);
+            color: white;
+            padding: 2rem 1.5rem;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        .logo img {
+            width: 30px;
+            margin-right: 10px;
+        }
+        
+        .nav-menu {
+            list-style: none;
+            margin-top: 2rem;
+        }
+        
+        .nav-item {
+            margin-bottom: 1rem;
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .nav-link img {
+            width: 18px;
+            margin-right: 10px;
+            opacity: 0.7;
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+            object-fit: cover;
+        }
+        
+        .logout-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: #d11a66;
+        }
+        
+        /* Plan Cards */
+        .plans-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .plan-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .plan-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .plan-card.free {
+            border-top: 4px solid #4cc9f0;
+        }
+        
+        .plan-card.monthly {
+            border-top: 4px solid #4361ee;
+        }
+        
+        .plan-card.lifetime {
+            border-top: 4px solid #3a0ca3;
+        }
+        
+        .plan-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .plan-price {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .plan-features {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+        
+        .plan-features li {
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        
+        .plan-features li:before {
+            content: "✓";
+            color: var(--success);
+            margin-right: 8px;
+            font-weight: bold;
+        }
+        
+        .upgrade-btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upgrade-btn.free {
+            background: #e2e8f0;
+            color: var(--dark);
+        }
+        
+        .upgrade-btn.monthly {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .upgrade-btn.lifetime {
+            background: #3a0ca3;
+            color: white;
+        }
+        
+        .upgrade-btn:hover {
+            opacity: 0.9;
+        }
+        
+        .current-plan-badge {
+            background: var(--success);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        /* User Stats */
+        .user-stats {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+        }
+        
+        .stats-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .stat-card {
+            padding: 1rem;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-value {
+            font-weight: 700;
+            font-size: 1.4rem;
+        }
+        
+        /* Tool Access */
+        .tool-access {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .tool-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .tool-description {
+            color: #64748b;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .access-tool-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .access-tool-btn:hover {
+            background: var(--secondary);
+        }
+        
+        .access-tool-btn:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <img src="https://cdn-icons-png.flaticon.com/512/2965/2965300.png" alt="Logo">
+                SecureApp
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active">
+                        <img src="https://cdn-icons-png.flaticon.com/512/1946/1946488.png" alt="Dashboard">
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <img src="https://cdn-icons-png.flaticon.com/512/2933/2933245.png" alt="Tools">
+                        Tools
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <img src="https://cdn-icons-png.flaticon.com/512/126/126486.png" alt="Settings">
+                        Settings
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <img src="https://cdn-icons-png.flaticon.com/512/159/159604.png" alt="Support">
+                        Support
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h2>Dashboard</h2>
+                <div class="user-profile">
+                    <img id="user-avatar" src="" alt="User" class="user-avatar">
+                    <button id="logout-btn" class="logout-btn">Logout</button>
+                </div>
+            </div>
+            
+            <!-- User Stats -->
+            <div class="user-stats">
+                <h3 class="stats-title">Your Account</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Current Plan</div>
+                        <div class="stat-value" id="current-plan">Free</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Joined On</div>
+                        <div class="stat-value" id="join-date">Jan 1, 2023</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Last Login</div>
+                        <div class="stat-value" id="last-login">Today</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Plans -->
+            <h3 style="margin-bottom: 1rem;">Your Plan Options</h3>
+            <div class="plans-container">
+                <!-- Free Plan -->
+                <div class="plan-card free">
+                    <div class="plan-name">Free Plan <span id="free-badge" class="current-plan-badge">Current</span></div>
+                    <div class="plan-price">$0</div>
+                    <ul class="plan-features">
+                        <li>Basic tool access</li>
+                        <li>Limited features</li>
+                        <li>Community support</li>
+                        <li>100 requests/month</li>
+                    </ul>
+                    <button id="free-btn" class="upgrade-btn free">Current Plan</button>
+                </div>
+                
+                <!-- Monthly Plan -->
+                <div class="plan-card monthly">
+                    <div class="plan-name">Monthly Pro</div>
+                    <div class="plan-price">$10<span style="font-size: 1rem; font-weight: normal;">/month</span></div>
+                    <ul class="plan-features">
+                        <li>Full tool access</li>
+                        <li>Priority support</li>
+                        <li>Advanced features</li>
+                        <li>5000 requests/month</li>
+                    </ul>
+                    <button id="monthly-btn" class="upgrade-btn monthly">Upgrade Now</button>
+                </div>
+                
+                <!-- Lifetime Plan -->
+                <div class="plan-card lifetime">
+                    <div class="plan-name">Lifetime Access</div>
+                    <div class="plan-price">$199</div>
+                    <ul class="plan-features">
+                        <li>All premium features</li>
+                        <li>24/7 VIP support</li>
+                        <li>Unlimited requests</li>
+                        <li>Early access to new tools</li>
+                    </ul>
+                    <button id="lifetime-btn" class="upgrade-btn lifetime">Get Lifetime</button>
+                </div>
+            </div>
+            
+            <!-- Tool Access -->
+            <div class="tool-access">
+                <h3 class="tool-title">Premium Tool Access</h3>
+                <p class="tool-description">Access our exclusive tools based on your subscription plan. Upgrade to unlock all features.</p>
+                <button id="access-tool-btn" class="access-tool-btn">Open Secure Tool</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Modular SDK -->
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
+        import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js";
+
+        // Your Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyB-wOqU0JnvWM3Nt91xhac2x_qO5a54GMQ",
+            authDomain: "dinesh-3b413.firebaseapp.com",
+            projectId: "dinesh-3b413",
+            storageBucket: "dinesh-3b413.firebasestorage.app",
+            messagingSenderId: "1053189064237",
+            appId: "1:1053189064237:web:d261dbebb5e7299e829aa4",
+            measurementId: "G-FPVH4NC1ML"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // DOM Elements
+        const userAvatar = document.getElementById('user-avatar');
+        const logoutBtn = document.getElementById('logout-btn');
+        const currentPlanEl = document.getElementById('current-plan');
+        const joinDateEl = document.getElementById('join-date');
+        const lastLoginEl = document.getElementById('last-login');
+        const freeBadge = document.getElementById('free-badge');
+        const freeBtn = document.getElementById('free-btn');
+        const monthlyBtn = document.getElementById('monthly-btn');
+        const lifetimeBtn = document.getElementById('lifetime-btn');
+        const accessToolBtn = document.getElementById('access-tool-btn');
+
+        // Check auth state
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Set user avatar
+            if (user.photoURL) {
+                userAvatar.src = user.photoURL;
+            } else {
+                // Default avatar if no photo
+                userAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'User')}&background=random`;
+            }
+
+            // Get user data from Firestore
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                
+                // Display user data
+                currentPlanEl.textContent = userData.plan.charAt(0).toUpperCase() + userData.plan.slice(1);
+                
+                // Format dates
+                const joinDate = userData.joinDate?.toDate() || new Date();
+                joinDateEl.textContent = joinDate.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+                
+                const lastLogin = userData.lastLogin?.toDate() || new Date();
+                lastLoginEl.textContent = lastLogin.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+
+                // Highlight current plan
+                document.querySelectorAll('.current-plan-badge').forEach(badge => {
+                    badge.style.display = 'none';
+                });
+                
+                if (userData.plan === 'free') {
+                    freeBadge.style.display = 'inline-block';
+                    freeBtn.textContent = 'Current Plan';
+                    accessToolBtn.disabled = true;
+                } else if (userData.plan === 'monthly') {
+                    monthlyBtn.textContent = 'Current Plan';
+                    monthlyBtn.classList.add('free');
+                    monthlyBtn.classList.remove('monthly');
+                } else if (userData.plan === 'lifetime') {
+                    lifetimeBtn.textContent = 'Current Plan';
+                    lifetimeBtn.classList.add('free');
+                    lifetimeBtn.classList.remove('lifetime');
+                }
+            }
+
+            // Update last login time
+            await updateDoc(doc(db, "users", user.uid), {
+                lastLogin: new Date()
+            });
+        });
+
+        // Plan Upgrade Buttons
+        monthlyBtn.addEventListener('click', async () => {
+            if (confirm('Upgrade to Monthly Pro plan for $10/month?')) {
+                try {
+                    await updateDoc(doc(db, "users", auth.currentUser.uid), {
+                        plan: 'monthly'
+                    });
+                    alert('Plan upgraded successfully!');
+                    window.location.reload();
+                } catch (error) {
+                    alert('Error upgrading plan: ' + error.message);
+                }
+            }
+        });
+
+        lifetimeBtn.addEventListener('click', async () => {
+            if (confirm('Purchase Lifetime Access for $199 (one-time payment)?')) {
+                try {
+                    await updateDoc(doc(db, "users", auth.currentUser.uid), {
+                        plan: 'lifetime'
+                    });
+                    alert('Plan upgraded successfully!');
+                    window.location.reload();
+                } catch (error) {
+                    alert('Error upgrading plan: ' + error.message);
+                }
+            }
+        });
+
+        // Tool Access Button
+        accessToolBtn.addEventListener('click', () => {
+            window.location.href = 'tool.html';
+        });
+
+        // Logout Button
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).then(() => {
+                window.location.href = 'index.html';
+            });
+        });
+    </script>
+</body>
+</html>
