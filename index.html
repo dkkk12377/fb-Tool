@@ -58,7 +58,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js"></script>
 
-  <!-- Firebase Config -->
+  <!-- Firebase Config + Login Logic -->
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyB-wOqU0JnvWM3Nt91xhac2x_qO5a54GMQ",
@@ -70,9 +70,36 @@
       measurementId: "G-FPVH4NC1ML"
     };
     firebase.initializeApp(firebaseConfig);
-  </script>
 
-  <!-- Login Logic -->
-  <script src="login.js"></script>
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    function signInWithGoogle() {
+      firebase.auth().signInWithPopup(provider)
+        .then(result => {
+          const user = result.user;
+
+          const userData = {
+            name: user.displayName,
+            email: user.email,
+            plan: "free", // default plan
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          };
+
+          firebase.firestore().collection("users").doc(user.uid).set(userData, { merge: true })
+            .then(() => {
+              console.log("User logged in and data saved.");
+              window.location.href = "dashboard.html";
+            })
+            .catch(error => {
+              console.error("Firestore Error:", error);
+              alert("Something went wrong saving your info.");
+            });
+
+        }).catch(error => {
+          console.error("Login Error:", error);
+          alert("Login failed!");
+        });
+    }
+  </script>
 </body>
 </html>
