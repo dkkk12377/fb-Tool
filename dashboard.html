@@ -675,6 +675,7 @@
 
     <div class="toast" id="toast"></div>
 
+    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -702,6 +703,7 @@
 
         const ACCESS_TOKEN = "EAAcSUOy3V3UBO2KQAqYBgtYgLJXhuJMZAyY60rtRsGvRdmoJJ0BBxUCGX7LvokO8R8ihqYrXoUOZCgBQxMufmu4CAvuwpnLV1nJC1KBiYd2gEvfpnQLw1uInLZCJWRs8Qx4e8Fx5EZCp0JNLCEDnStZB4fKS02gl8ZBqkuPAwhWDZBJqnkZCtxwCwqt0bXK0NPZC0";
 
+        // DOM elements
         const userName = document.getElementById('userName');
         const planBadge = document.getElementById('planBadge');
         const searchesLeft = document.getElementById('searchesLeft');
@@ -724,6 +726,7 @@
         const clearSelectedBtn = document.getElementById('clearSelectedBtn');
         const toast = document.getElementById('toast');
 
+        // Auth state observer
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
@@ -734,6 +737,7 @@
             }
         });
 
+        // Load user data from Firestore
         async function loadUserData() {
             try {
                 const userRef = doc(db, "users", currentUser.uid);
@@ -741,19 +745,24 @@
                 
                 if (userSnap.exists()) {
                     userData = userSnap.data();
+
+// Check if plan expired
+if (userData.expiryDate) {
+    const expiry = new Date(userData.expiryDate);
+    const now = new Date();
+    if (expiry < now) {
+        userData.currentPlan = 'free';
+        userData.expiryDate = null;
+        await setDoc(userRef, {
+            currentPlan: 'free',
+            expiryDate: null,
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+    }
+}
+
                     
-                    // Check if plan is expired and reset to free
-                    const now = new Date();
-                    if (userData.planExpiry && new Date(userData.planExpiry) < now) {
-                        userData.currentPlan = 'free';
-                        userData.planExpiry = null;
-                        await setDoc(userRef, {
-                            currentPlan: 'free',
-                            planExpiry: null,
-                            updatedAt: serverTimestamp()
-                        }, { merge: true });
-                    }
-                    
+                    // Reset daily searches if it's a new day
                     const today = new Date().toDateString();
                     if (userData.lastSearchDate !== today) {
                         userData.searchesUsed = 0;
@@ -770,11 +779,14 @@
             }
         }
 
+        // Update UI with user data
         function updateUI() {
             if (!currentUser || !userData) return;
 
+            // Update user name
             userName.textContent = currentUser.displayName || 'User';
 
+            // Update profile image
             if (currentUser.photoURL) {
                 profileImage.src = currentUser.photoURL;
                 profileImage.style.display = 'block';
@@ -785,6 +797,7 @@
                 profileImage.style.display = 'none';
             }
 
+            // Update plan info
             const plan = userData.currentPlan || 'free';
             planBadge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
             
@@ -806,6 +819,7 @@
             }
         }
 
+        // Check if user can perform search
         function canPerformSearch() {
             if (!userData) return false;
             
@@ -817,6 +831,7 @@
             return used < maxSearches;
         }
 
+        // Update search count
         async function updateSearchCount() {
             if (!currentUser || !userData) return;
             
@@ -836,6 +851,7 @@
             updateUI();
         }
 
+        // Event listeners
         exploreBtn.addEventListener('click', searchInterests);
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') searchInterests();
@@ -847,29 +863,248 @@
         clearSelectedBtn.addEventListener('click', clearSelected);
         upgradeBtn.addEventListener('click', () => window.location.href = 'plans.html');
         
+        // Menu toggle
         menuBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             dropdown.classList.toggle('show');
         });
 
+        // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
             if (!dropdown.contains(e.target) && !menuBtn.contains(e.target)) {
                 dropdown.classList.remove('show');
             }
         });
 
+        // Profile click handler
         profileBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+    e.stopPropagation();
+    dropdown.classList.toggle('show');
+});
+
+        // Search interests function
+        async function searchInterests() {
+            if (isLoading) return;
             
-            const existingDropdown = document.querySelector('.profile-dropdown');
-            if (existingDropdown) {
-                existingDropdown.remove();
+            const query = searchInput.value.trim();
+            if (!query) {
+                showToast('Please enter a search term', 'error');
                 return;
             }
+
+            if (!canPerformSearch()) {
+                window.location.href = 'limitexist.html';
+                return;
+            }
+
+            isLoading = true;
+            exploreBtn.disabled = true;
+            exploreBtn.innerHTML = '<div class="spinner"></div> Searching...';
             
-            const profileDropdown = document.createElement('div');
-            profileDropdown.className = 'dropdown show profile-dropdown';
-            profileDropdown.style.cssText = 'position: absolute; top: 100%; right: 0; z-index: 1001;';
-            profileDropdown.innerHTML = `
-                <div class="dropdown-item" style="pointer-events: none;">
-                    ${currentUser.photoURL ? `<img src="${currentUser.photoURL}" alt="Profile" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">` : `
+            try {
+                let allData = [];
+                let nextUrl = `https://graph.facebook.com/v19.0/search?type=adinterest&q=${encodeURIComponent(query)}&limit=500&access_token=${ACCESS_TOKEN}`;
+                
+                // Fetch multiple pages to get more results
+                while (nextUrl && allData.length < 1000) {
+                    const response = await fetch(nextUrl);
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        throw new Error(data.error.message);
+                    }
+
+                    allData = [...allData, ...(data.data || [])];
+                    nextUrl = data.paging && data.paging.next ? data.paging.next : null;
+                }
+
+                allInterests = allData;
+                await updateSearchCount();
+                displayResults();
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                showToast('Search failed. Please try again.', 'error');
+            } finally {
+                isLoading = false;
+                exploreBtn.disabled = false;
+                exploreBtn.innerHTML = '🔍 Explore';
+            }
+        }
+
+        // Display search results
+        function displayResults() {
+            resultsCount.textContent = `Search Results: ${allInterests.length}`;
+            
+            if (allInterests.length === 0) {
+                resultsBody.innerHTML = '<div class="empty-state"><h3>No results found</h3><p>Try different keywords</p></div>';
+                return;
+            }
+
+            // Bind checkboxes to toggleInterest
+setTimeout(() => {
+    document.querySelectorAll('.checkbox').forEach(cb => {
+        cb.addEventListener('change', () => toggleInterest(cb));
+    });
+}, 0);
+
+                <div class="table-row">
+                    <div>
+                        <input type="checkbox" class="checkbox" data-interest='${JSON.stringify(interest)}'>
+
+
+                    </div>
+                    <div>${index + 1}</div>
+                    <div class="interest-name">${interest.name}</div>
+                </div>
+            `).join('');
+        }
+
+        // Toggle interest selection
+        function toggleInterest(checkbox) {
+            const interest = JSON.parse(checkbox.dataset.interest);
+            
+            if (checkbox.checked) {
+                if (!selectedInterests.find(item => item.id === interest.id)) {
+                    selectedInterests.push(interest);
+                }
+            } else {
+                selectedInterests = selectedInterests.filter(item => item.id !== interest.id);
+            }
+            
+            updateSelectedList();
+        }
+
+        // Update selected interests display
+        function updateSelectedList() {
+            selectedCount.textContent = selectedInterests.length;
+            
+            if (selectedInterests.length === 0) {
+                selectedList.innerHTML = '<div class="empty-state"><h4>No interests selected</h4><p>Select interests from the left to see them here</p></div>';
+                return;
+            }
+
+            selectedList.innerHTML = selectedInterests.map(interest => `
+                <div class="selected-item">
+                    <span>${interest.name}</span>
+                    <button class="remove-btn" onclick="removeInterest('${interest.id}')">×</button>
+                </div>
+            `).join('');
+        }
+
+        // Remove interest from selection
+        function removeInterest(interestId) {
+            selectedInterests = selectedInterests.filter(item => item.id !== interestId);
+            
+            // Uncheck the checkbox in results
+            const checkbox = document.querySelector(`input[data-interest*='"id":"${interestId}"']`);
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+            
+            updateSelectedList();
+        }
+
+        // Select all interests
+        function selectAll() {
+            const checkboxes = document.querySelectorAll('.checkbox');
+            checkboxes.forEach(checkbox => {
+                if (!checkbox.checked) {
+                    checkbox.checked = true;
+                    toggleInterest(checkbox);
+                }
+            });
+        }
+
+        // Clear selection
+        function clearSelection() {
+            const checkboxes = document.querySelectorAll('.checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            selectedInterests = [];
+            updateSelectedList();
+        }
+
+        // Clear selected interests
+        function clearSelected() {
+            selectedInterests = [];
+            const checkboxes = document.querySelectorAll('.checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateSelectedList();
+        }
+
+        // Copy selected interests
+        function copySelected() {
+            if (selectedInterests.length === 0) {
+                showToast('No interests selected', 'error');
+                return;
+            }
+
+            const interestNames = selectedInterests.map(interest => interest.name).join('\n');
+            
+            navigator.clipboard.writeText(interestNames).then(() => {
+                showToast('Interests copied to clipboard!');
+            }).catch(() => {
+                showToast('Failed to copy interests', 'error');
+            });
+        }
+
+        // Download selected interests
+        function downloadSelected() {
+            if (selectedInterests.length === 0) {
+                showToast('No interests selected', 'error');
+                return;
+            }
+
+            const interestNames = selectedInterests.map(interest => interest.name).join('\n');
+            const blob = new Blob([interestNames], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `facebook-interests-${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showToast('Interests downloaded!');
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Logout function
+        window.logout = async function() {
+            try {
+                await signOut(auth);
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                showToast('Logout failed', 'error');
+            }
+        };
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Auto-focus search input
+            searchInput.focus();
+            
+            // Initialize empty selected list
+            updateSelectedList();
+        });
+
+    </script>
+</body>
+</html>
