@@ -84,7 +84,7 @@
     const db = getFirestore();
     const provider = new GoogleAuthProvider();
 
-    async function signInWithGoogle() {
+    window.signInWithGoogle = async function () {
       const spinner = document.getElementById("spinner");
       spinner.style.display = "block";
       try {
@@ -119,7 +119,7 @@
         alert("Login failed. Please try again.");
         spinner.style.display = "none";
       }
-    }
+    };
   </script>
 </body>
 </html>
