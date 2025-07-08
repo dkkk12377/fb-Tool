@@ -873,4 +873,235 @@
                         <div style="font-weight: 600;">${currentUser.displayName || 'User'}</div>
                         <div style="font-size: 12px; opacity: 0.7;">${currentUser.email}</div>
                     </div
+</div>
+                </div>
+            `;
+            
+            const existingProfileDropdown = document.querySelector('.profile-dropdown');
+            if (existingProfileDropdown) {
+                existingProfileDropdown.remove();
+            }
+            
+            profileDropdown.className += ' profile-dropdown';
+            document.querySelector('.profile-section').appendChild(profileDropdown);
+            
+            setTimeout(() => {
+                document.addEventListener('click', function closeProfileDropdown(e) {
+                    if (!profileDropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+                        profileDropdown.remove();
+                        document.removeEventListener('click', closeProfileDropdown);
+                    }
+                });
+            }, 0);
+        });
+
+        // Search interests function
+        async function searchInterests() {
+            if (isLoading) return;
+            
+            const query = searchInput.value.trim();
+            if (!query) {
+                showToast('Please enter a search term', 'error');
+                return;
+            }
+
+            if (!canPerformSearch()) {
+                window.location.href = 'limitexist.html';
+                return;
+            }
+
+            isLoading = true;
+            exploreBtn.disabled = true;
+            exploreBtn.innerHTML = '<div class="spinner"></div> Searching...';
+            
+            try {
+                const response = await fetch(`https://graph.facebook.com/v19.0/search?type=adinterest&q=${encodeURIComponent(query)}&limit=100&access_token=${ACCESS_TOKEN}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error.message);
+                }
+
+                allInterests = data.data || [];
+                await updateSearchCount();
+                displayResults();
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                showToast('Search failed. Please try again.', 'error');
+            } finally {
+                isLoading = false;
+                exploreBtn.disabled = false;
+                exploreBtn.innerHTML = '🔍 Explore';
+            }
+        }
+
+        // Display search results
+        function displayResults() {
+            resultsCount.textContent = `Search Results: ${allInterests.length}`;
+            
+            if (allInterests.length === 0) {
+                resultsBody.innerHTML = '<div class="empty-state"><h3>No results found</h3><p>Try different keywords</p></div>';
+                return;
+            }
+
+            resultsBody.innerHTML = allInterests.map((interest, index) => `
+                <div class="table-row">
+                    <div>
+                        <input type="checkbox" class="checkbox" data-interest='${JSON.stringify(interest)}' onchange="toggleInterest(this)">
+                    </div>
+                    <div>${index + 1}</div>
+                    <div class="interest-name">${interest.name}</div>
+                </div>
+            `).join('');
+        }
+
+        // Toggle interest selection
+        function toggleInterest(checkbox) {
+            const interest = JSON.parse(checkbox.dataset.interest);
+            
+            if (checkbox.checked) {
+                if (!selectedInterests.find(item => item.id === interest.id)) {
+                    selectedInterests.push(interest);
+                }
+            } else {
+                selectedInterests = selectedInterests.filter(item => item.id !== interest.id);
+            }
+            
+            updateSelectedList();
+        }
+
+        // Update selected interests display
+        function updateSelectedList() {
+            selectedCount.textContent = selectedInterests.length;
+            
+            if (selectedInterests.length === 0) {
+                selectedList.innerHTML = '<div class="empty-state"><h4>No interests selected</h4><p>Select interests from the left to see them here</p></div>';
+                return;
+            }
+
+            selectedList.innerHTML = selectedInterests.map(interest => `
+                <div class="selected-item">
+                    <span>${interest.name}</span>
+                    <button class="remove-btn" onclick="removeInterest('${interest.id}')">×</button>
+                </div>
+            `).join('');
+        }
+
+        // Remove interest from selection
+        function removeInterest(interestId) {
+            selectedInterests = selectedInterests.filter(item => item.id !== interestId);
+            
+            // Uncheck the checkbox in results
+            const checkbox = document.querySelector(`input[data-interest*='"id":"${interestId}"']`);
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+            
+            updateSelectedList();
+        }
+
+        // Select all interests
+        function selectAll() {
+            const checkboxes = document.querySelectorAll('.checkbox');
+            checkboxes.forEach(checkbox => {
+                if (!checkbox.checked) {
+                    checkbox.checked = true;
+                    toggleInterest(checkbox);
+                }
+            });
+        }
+
+        // Clear selection
+        function clearSelection() {
+            const checkboxes = document.querySelectorAll('.checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            selectedInterests = [];
+            updateSelectedList();
+        }
+
+        // Clear selected interests
+        function clearSelected() {
+            selectedInterests = [];
+            const checkboxes = document.querySelectorAll('.checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateSelectedList();
+        }
+
+        // Copy selected interests
+        function copySelected() {
+            if (selectedInterests.length === 0) {
+                showToast('No interests selected', 'error');
+                return;
+            }
+
+            const interestNames = selectedInterests.map(interest => interest.name).join('\n');
+            
+            navigator.clipboard.writeText(interestNames).then(() => {
+                showToast('Interests copied to clipboard!');
+            }).catch(() => {
+                showToast('Failed to copy interests', 'error');
+            });
+        }
+
+        // Download selected interests
+        function downloadSelected() {
+            if (selectedInterests.length === 0) {
+                showToast('No interests selected', 'error');
+                return;
+            }
+
+            const interestNames = selectedInterests.map(interest => interest.name).join('\n');
+            const blob = new Blob([interestNames], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `facebook-interests-${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showToast('Interests downloaded!');
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Logout function
+        window.logout = async function() {
+            try {
+                await signOut(auth);
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                showToast('Logout failed', 'error');
+            }
+        };
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Auto-focus search input
+            searchInput.focus();
+            
+            // Initialize empty selected list
+            updateSelectedList();
+        });
+
+    </script>
+</body>
+</html>
                     
