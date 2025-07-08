@@ -988,20 +988,7 @@
                 </div>
             `).join('');
         }
-
-        // Toggle interest selection    window.toggleInterest = function(checkbox) {
-            const interest = JSON.parse(checkbox.dataset.interest);
-            
-            if (checkbox.checked) {
-                if (!selectedInterests.find(item => item.id === interest.id)) {
-                    selectedInterests.push(interest);
-                }
-            } else {
-                selectedInterests = selectedInterests.filter(item => item.id !== interest.id);
-            }
-            
-            updateSelectedList();
-        };
+S
         // Update selected interests display
         function updateSelectedList() {
             selectedCount.textContent = selectedInterests.length;
@@ -1147,4 +1134,3 @@
 </body>
 </html>
                     
-
