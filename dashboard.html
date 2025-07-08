@@ -915,14 +915,23 @@
             exploreBtn.innerHTML = '<div class="spinner"></div> Searching...';
             
             try {
-                const response = await fetch(`https://graph.facebook.com/v19.0/search?type=adinterest&q=${encodeURIComponent(query)}&limit=100&access_token=${ACCESS_TOKEN}`);
-                const data = await response.json();
+                let allData = [];
+                let nextUrl = `https://graph.facebook.com/v19.0/search?type=adinterest&q=${encodeURIComponent(query)}&limit=500&access_token=${ACCESS_TOKEN}`;
                 
-                if (data.error) {
-                    throw new Error(data.error.message);
+                // Fetch multiple pages to get more results
+                while (nextUrl && allData.length < 1000) {
+                    const response = await fetch(nextUrl);
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        throw new Error(data.error.message);
+                    }
+
+                    allData = [...allData, ...(data.data || [])];
+                    nextUrl = data.paging && data.paging.next ? data.paging.next : null;
                 }
 
-                allInterests = data.data || [];
+                allInterests = allData;
                 await updateSearchCount();
                 displayResults();
                 
