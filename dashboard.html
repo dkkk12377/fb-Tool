@@ -746,6 +746,23 @@
                 if (userSnap.exists()) {
                     userData = userSnap.data();
                     
+                    // Check if paid plan expired
+                    if (userData.currentPlan === 'monthly' && userData.planExpiry) {
+                        const now = new Date();
+                        const expiryDate = new Date(userData.planExpiry);
+                        
+                        if (now > expiryDate) {
+                            // Plan expired, reset to free
+                            userData.currentPlan = 'free';
+                            userData.planExpiry = null;
+                            await setDoc(userRef, {
+                                currentPlan: 'free',
+                                planExpiry: null,
+                                updatedAt: serverTimestamp()
+                            }, { merge: true });
+                        }
+                    }
+                    
                     // Reset daily searches if it's a new day
                     const today = new Date().toDateString();
                     if (userData.lastSearchDate !== today) {
@@ -762,7 +779,6 @@
                 console.error("Error loading user data:", error);
             }
         }
-
         // Update UI with user data
         function updateUI() {
             if (!currentUser || !userData) return;
@@ -861,37 +877,45 @@
         });
 
         // Profile click handler
-        profileBtn.addEventListener('click', (e) => {
+         profileBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const profileDropdown = document.createElement('div');
-            profileDropdown.className = 'dropdown show';
-            profileDropdown.style.right = '60px';
-            profileDropdown.innerHTML = `
-                <div class="dropdown-item" style="pointer-events: none;">
-                    <img src="${currentUser.photoURL || ''}" alt="Profile" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
-                    <div>
-                        <div style="font-weight: 600;">${currentUser.displayName || 'User'}</div>
-                        <div style="font-size: 12px; opacity: 0.7;">${currentUser.email}</div>
-                    </div
-</div>
-                </div>
-            `;
             
+            // Remove existing profile dropdown
             const existingProfileDropdown = document.querySelector('.profile-dropdown');
             if (existingProfileDropdown) {
                 existingProfileDropdown.remove();
+                return;
             }
             
-            profileDropdown.className += ' profile-dropdown';
+            const profileDropdown = document.createElement('div');
+            profileDropdown.className = 'dropdown show profile-dropdown';
+            profileDropdown.style.cssText = 'position: absolute; top: 100%; right: 0; z-index: 1000;';
+            
+            const profileImg = currentUser.photoURL ? 
+                `<img src="${currentUser.photoURL}" alt="Profile" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">` :
+                `<span style="width: 24px; height: 24px; border-radius: 50%; background: #ff6b6b; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">${(currentUser.displayName || 'U').charAt(0).toUpperCase()}</span>`;
+            
+            profileDropdown.innerHTML = `
+                <div class="dropdown-item" style="pointer-events: none; opacity: 0.8;">
+                    ${profileImg}
+                    <div>
+                        <div style="font-weight: 600;">${currentUser.displayName || 'User'}</div>
+                        <div style="font-size: 12px; opacity: 0.7;">${currentUser.email}</div>
+                    </div>
+                </div>
+            `;
+            
             document.querySelector('.profile-section').appendChild(profileDropdown);
             
+            // Close dropdown when clicking outside
             setTimeout(() => {
-                document.addEventListener('click', function closeProfileDropdown(e) {
-                    if (!profileDropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+                function closeProfileDropdown(event) {
+                    if (!profileDropdown.contains(event.target) && !profileBtn.contains(event.target)) {
                         profileDropdown.remove();
                         document.removeEventListener('click', closeProfileDropdown);
                     }
-                });
+                }
+                document.addEventListener('click', closeProfileDropdown);
             }, 0);
         });
 
@@ -965,8 +989,7 @@
             `).join('');
         }
 
-        // Toggle interest selection
-        function toggleInterest(checkbox) {
+        // Toggle interest selection    window.toggleInterest = function(checkbox) {
             const interest = JSON.parse(checkbox.dataset.interest);
             
             if (checkbox.checked) {
@@ -978,8 +1001,7 @@
             }
             
             updateSelectedList();
-        }
-
+        };
         // Update selected interests display
         function updateSelectedList() {
             selectedCount.textContent = selectedInterests.length;
@@ -997,29 +1019,41 @@
             `).join('');
         }
 
-        // Remove interest from selection
-        function removeInterest(interestId) {
+        // Remove interest from selection  window.removeInterest = function(interestId) {
             selectedInterests = selectedInterests.filter(item => item.id !== interestId);
             
             // Uncheck the checkbox in results
-            const checkbox = document.querySelector(`input[data-interest*='"id":"${interestId}"']`);
-            if (checkbox) {
-                checkbox.checked = false;
-            }
+            const checkboxes = document.querySelectorAll('.checkbox');
+            checkboxes.forEach(checkbox => {
+                try {
+                    const interest = JSON.parse(checkbox.dataset.interest);
+                    if (interest.id === interestId) {
+                        checkbox.checked = false;
+                    }
+                } catch (e) {
+                    console.error('Error parsing interest data:', e);
+                }
+            });
+            
+            updateSelectedList();
+        };
+
+        // Select all interests
+               function selectAll() {
+            const checkboxes = document.querySelectorAll('.checkbox');
+            selectedInterests = []; // Clear first
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                const interest = JSON.parse(checkbox.dataset.interest);
+                if (!selectedInterests.find(item => item.id === interest.id)) {
+                    selectedInterests.push(interest);
+                }
+            });
             
             updateSelectedList();
         }
 
-        // Select all interests
-        function selectAll() {
-            const checkboxes = document.querySelectorAll('.checkbox');
-            checkboxes.forEach(checkbox => {
-                if (!checkbox.checked) {
-                    checkbox.checked = true;
-                    toggleInterest(checkbox);
-                }
-            });
-        }
 
         // Clear selection
         function clearSelection() {
@@ -1032,15 +1066,14 @@
         }
 
         // Clear selected interests
-        function clearSelected() {
-            selectedInterests = [];
+            function clearSelection() {
             const checkboxes = document.querySelectorAll('.checkbox');
             checkboxes.forEach(checkbox => {
                 checkbox.checked = false;
             });
+            selectedInterests = [];
             updateSelectedList();
         }
-
         // Copy selected interests
         function copySelected() {
             if (selectedInterests.length === 0) {
