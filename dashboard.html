@@ -1005,8 +1005,8 @@ z-index: 100;
         }
 
         // Remove interest from selection
-        function removeInterest(interestId) {
-            selectedInterests = selectedInterests.filter(item => item.id !== interestId);
+       function removeInterest(name) {
+            selectedInterests = selectedInterests.filter(item => item !== name);
             
             // Uncheck the checkbox in results
             const checkbox = document.querySelector(`input[data-interest*='"id":"${interestId}"']`);
