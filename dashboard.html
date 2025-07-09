@@ -638,11 +638,14 @@ z-index: 100;
                 </div>
 
                 <div class="results-table" id="resultsTable">
-                    <div class="table-header">
-                        <div></div>
-                        <div>SL</div>
-                        <div>Interest Name</div>
-                    </div>
+                   <div class="table-header">
+    <div></div>
+    <div>SL</div>
+    <div>Interest Name</div>
+    <div>Size</div>
+    <div>Path</div>
+    <div>Topic</div>
+</div>
                     <div id="resultsBody">
                         <div class="empty-state">
                             <h3>🔍 Ready to Explore</h3>
@@ -706,8 +709,9 @@ const resultsTableHTML = `
 const additionalCSS = `
 .table-header {
     background: rgba(255, 255, 255, 0.05);
+grid-template-columns: 50px 50px 2fr 100px 150px 120px;
     padding: 15px;
-    display: flex;
+    display: grid;
     gap: 15px;
     font-weight: 600;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -716,7 +720,8 @@ const additionalCSS = `
 
 .table-row {
     padding: 15px;
-    display: flex;
+    display: grid;
+grid-template-columns: 50px 50px 2fr 100px 150px 120px;
     gap: 15px;
     align-items: center;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -962,464 +967,490 @@ selectedStyleSheet.textContent = selectedItemCSS;
 document.head.appendChild(selectedStyleSheet);
     <!-- Firebase SDK -->
     <script type="module">
-   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-   import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-   const firebaseConfig = {
-       apiKey: "AIzaSyB-wOqU0JnvWM3Nt91xhac2x_qO5a54GMQ",
-       authDomain: "dinesh-3b413.firebaseapp.com",
-       projectId: "dinesh-3b413",
-       storageBucket: "dinesh-3b413.appspot.com",
-       messagingSenderId: "1053189064237",
-       appId: "1:1053189064237:web:d261dbebb5e7299e829aa4",
-       measurementId: "G-FPVH4NC1ML"
-   };
+        const firebaseConfig = {
+            apiKey: "AIzaSyB-wOqU0JnvWM3Nt91xhac2x_qO5a54GMQ",
+            authDomain: "dinesh-3b413.firebaseapp.com",
+            projectId: "dinesh-3b413",
+            storageBucket: "dinesh-3b413.appspot.com",
+            messagingSenderId: "1053189064237",
+            appId: "1:1053189064237:web:d261dbebb5e7299e829aa4",
+            measurementId: "G-FPVH4NC1ML"
+        };
 
-   const app = initializeApp(firebaseConfig);
-   const auth = getAuth();
-   const db = getFirestore();
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const db = getFirestore();
 
-   let currentUser = null;
-   let userData = null;
-   let allInterests = [];
-   let selectedInterests = [];
-   let isLoading = false;
+        let currentUser = null;
+        let userData = null;
+        let allInterests = [];
+        let selectedInterests = [];
+        let isLoading = false;
 
-   const ACCESS_TOKEN = "EAAcSUOy3V3UBO2KQAqYBgtYgLJXhuJMZAyY60rtRsGvRdmoJJ0BBxUCGX7LvokO8R8ihqYrXoUOZCgBQxMufmu4CAvuwpnLV1nJC1KBiYd2gEvfpnQLw1uInLZCJWRs8Qx4e8Fx5EZCp0JNLCEDnStZB4fKS02gl8ZBqkuPAwhWDZBJqnkZCtxwCwqt0bXK0NPZC0";
+        const ACCESS_TOKEN = "EAAcSUOy3V3UBO2KQAqYBgtYgLJXhuJMZAyY60rtRsGvRdmoJJ0BBxUCGX7LvokO8R8ihqYrXoUOZCgBQxMufmu4CAvuwpnLV1nJC1KBiYd2gEvfpnQLw1uInLZCJWRs8Qx4e8Fx5EZCp0JNLCEDnStZB4fKS02gl8ZBqkuPAwhWDZBJqnkZCtxwCwqt0bXK0NPZC0";
 
-   // DOM elements
-   const userName = document.getElementById('userName');
-   const planBadge = document.getElementById('planBadge');
-   const searchesLeft = document.getElementById('searchesLeft');
-   const upgradeBtn = document.getElementById('upgradeBtn');
-   const profileBtn = document.getElementById('profileBtn');
-   const profileImage = document.getElementById('profileImage');
-   const profileInitial = document.getElementById('profileInitial');
-   const menuBtn = document.getElementById('menuBtn');
-   const dropdown = document.getElementById('dropdown');
-   const searchInput = document.getElementById('searchInput');
-   const exploreBtn = document.getElementById('exploreBtn');
-   const resultsCount = document.getElementById('resultsCount');
-   const resultsBody = document.getElementById('resultsBody');
-   const selectedList = document.getElementById('selectedList');
-   const selectedCount = document.getElementById('selectedCount');
-   const selectAllBtn = document.getElementById('selectAllBtn');
-   const clearBtn = document.getElementById('clearBtn');
-   const copyBtn = document.getElementById('copyBtn');
-   const downloadBtn = document.getElementById('downloadBtn');
-   const clearSelectedBtn = document.getElementById('clearSelectedBtn');
-   const toast = document.getElementById('toast');
+        // DOM elements
+        const userName = document.getElementById('userName');
+        const planBadge = document.getElementById('planBadge');
+        const searchesLeft = document.getElementById('searchesLeft');
+        const upgradeBtn = document.getElementById('upgradeBtn');
+        const profileBtn = document.getElementById('profileBtn');
+        const profileImage = document.getElementById('profileImage');
+        const profileInitial = document.getElementById('profileInitial');
+        const menuBtn = document.getElementById('menuBtn');
+        const dropdown = document.getElementById('dropdown');
+        const searchInput = document.getElementById('searchInput');
+        const exploreBtn = document.getElementById('exploreBtn');
+        const resultsCount = document.getElementById('resultsCount');
+        const resultsBody = document.getElementById('resultsBody');
+        const selectedList = document.getElementById('selectedList');
+        const selectedCount = document.getElementById('selectedCount');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const clearSelectedBtn = document.getElementById('clearSelectedBtn');
+        const toast = document.getElementById('toast');
 
-   // Auth state observer
-   onAuthStateChanged(auth, async (user) => {
-       if (user) {
-           currentUser = user;
-           await loadUserData();
-           updateUI();
-       } else {
-           window.location.href = 'index.html';
-       }
-   });
+        // Auth state observer
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                await loadUserData();
+                updateUI();
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
 
-   // Load user data from Firestore
-   async function loadUserData() {
-       try {
-           const userRef = doc(db, "users", currentUser.uid);
-           const userSnap = await getDoc(userRef);
-           
-           if (userSnap.exists()) {
-               userData = userSnap.data();
-               
-               // Reset daily searches if it's a new day
-               const today = new Date().toDateString();
-               if (userData.lastSearchDate !== today) {
-                   userData.searchesUsed = 0;
-                   userData.lastSearchDate = today;
-                   await setDoc(userRef, {
-                       searchesUsed: 0,
-                       lastSearchDate: today,
-                       updatedAt: serverTimestamp()
-                   }, { merge: true });
-               }
-           }
-       } catch (error) {
-           console.error("Error loading user data:", error);
-       }
-   }
+        // Load user data from Firestore
+        async function loadUserData() {
+            try {
+                const userRef = doc(db, "users", currentUser.uid);
+                const userSnap = await getDoc(userRef);
+                
+                if (userSnap.exists()) {
+                    userData = userSnap.data();
+                    
+                    // Reset daily searches if it's a new day
+                    const today = new Date().toDateString();
+                    if (userData.lastSearchDate !== today) {
+                        userData.searchesUsed = 0;
+                        userData.lastSearchDate = today;
+                        await setDoc(userRef, {
+                            searchesUsed: 0,
+                            lastSearchDate: today,
+                            updatedAt: serverTimestamp()
+                        }, { merge: true });
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading user data:", error);
+            }
+        }
 
-   // Update UI with user data
-   function updateUI() {
-       if (!currentUser || !userData) return;
+        // Update UI with user data
+        function updateUI() {
+            if (!currentUser || !userData) return;
 
-       // Update user name
-       userName.textContent = currentUser.displayName || 'User';
+            // Update user name
+            userName.textContent = currentUser.displayName || 'User';
 
-       // Update profile image
-       if (currentUser.photoURL) {
-           profileImage.src = currentUser.photoURL;
-           profileImage.style.display = 'block';
-           profileInitial.style.display = 'none';
-       } else {
-           profileInitial.textContent = currentUser.displayName ? currentUser.displayName.charAt(0).toUpperCase() : 'U';
-           profileInitial.style.display = 'block';
-           profileImage.style.display = 'none';
-       }
+            // Update profile image
+            if (currentUser.photoURL) {
+                profileImage.src = currentUser.photoURL;
+                profileImage.style.display = 'block';
+                profileInitial.style.display = 'none';
+            } else {
+                profileInitial.textContent = currentUser.displayName ? currentUser.displayName.charAt(0).toUpperCase() : 'U';
+                profileInitial.style.display = 'block';
+                profileImage.style.display = 'none';
+            }
 
-       // Update plan info
-       const plan = userData.currentPlan || 'free';
-       planBadge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
-       
-       if (plan === 'free') {
-           const maxSearches = 3;
-           const used = userData.searchesUsed || 0;
-           const remaining = Math.max(0, maxSearches - used);
-           searchesLeft.textContent = `${remaining}/${maxSearches} searches`;
-           upgradeBtn.style.display = remaining === 0 ? 'flex' : 'none';
-           
-           if (remaining === 0) {
-               searchesLeft.style.color = '#e74c3c';
-           } else {
-               searchesLeft.style.color = '#2ecc71';
-           }
-       } else {
-           searchesLeft.textContent = 'Unlimited searches';
-           upgradeBtn.style.display = 'none';
-       }
-   }
+            // Update plan info
+            const plan = userData.currentPlan || 'free';
+            planBadge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
+            
+            if (plan === 'free') {
+                const maxSearches = 3;
+                const used = userData.searchesUsed || 0;
+                const remaining = Math.max(0, maxSearches - used);
+                searchesLeft.textContent = `${remaining}/${maxSearches} searches`;
+                upgradeBtn.style.display = remaining === 0 ? 'flex' : 'none';
+                
+                if (remaining === 0) {
+                    searchesLeft.style.color = '#e74c3c';
+                } else {
+                    searchesLeft.style.color = '#2ecc71';
+                }
+            } else {
+                searchesLeft.textContent = 'Unlimited searches';
+                upgradeBtn.style.display = 'none';
+            }
+        }
 
-   // Check if user can perform search
-   function canPerformSearch() {
-       if (!userData) return false;
-       
-       const plan = userData.currentPlan || 'free';
-       if (plan === 'monthly') return true;
-       
-       const maxSearches = 3;
-       const used = userData.searchesUsed || 0;
-       return used < maxSearches;
-   }
+        // Check if user can perform search
+        function canPerformSearch() {
+            if (!userData) return false;
+            
+            const plan = userData.currentPlan || 'free';
+            if (plan === 'monthly') return true;
+            
+            const maxSearches = 3;
+            const used = userData.searchesUsed || 0;
+            return used < maxSearches;
+        }
 
-   // Update search count
-   async function updateSearchCount() {
-       if (!currentUser || !userData) return;
-       
-       const plan = userData.currentPlan || 'free';
-       if (plan === 'monthly') return;
-       
-       const newCount = (userData.searchesUsed || 0) + 1;
-       userData.searchesUsed = newCount;
-       
-       const userRef = doc(db, "users", currentUser.uid);
-       await setDoc(userRef, {
-           searchesUsed: newCount,
-           lastSearchDate: new Date().toDateString(),
-           updatedAt: serverTimestamp()
-       }, { merge: true });
-       
-       updateUI();
-   }
+        // Update search count
+        async function updateSearchCount() {
+            if (!currentUser || !userData) return;
+            
+            const plan = userData.currentPlan || 'free';
+            if (plan === 'monthly') return;
+            
+            const newCount = (userData.searchesUsed || 0) + 1;
+            userData.searchesUsed = newCount;
+            
+            const userRef = doc(db, "users", currentUser.uid);
+            await setDoc(userRef, {
+                searchesUsed: newCount,
+                lastSearchDate: new Date().toDateString(),
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            
+            updateUI();
+        }
 
-   // Search interests function
-   async function searchInterests() {
-       if (isLoading) return;
-       
-       const query = searchInput.value.trim();
-       if (!query) {
-           showToast('Please enter a search term', 'error');
-           return;
-       }
+        // Event listeners
+        exploreBtn.addEventListener('click', searchInterests);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchInterests();
+        });
+        selectAllBtn.addEventListener('click', selectAll);
+        clearBtn.addEventListener('click', clearSelection);
+        copyBtn.addEventListener('click', copySelected);
+        downloadBtn.addEventListener('click', downloadSelected);
+        clearSelectedBtn.addEventListener('click', clearSelected);
+        upgradeBtn.addEventListener('click', () => window.location.href = 'plans.html');
+        
+        // Menu toggle
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle('show');
+        });
 
-       if (!canPerformSearch()) {
-           window.location.href = 'limitexist.html';
-           return;
-       }
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!dropdown.contains(e.target) && !menuBtn.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
 
-       isLoading = true;
-       exploreBtn.disabled = true;
-       exploreBtn.innerHTML = '<div class="spinner"></div> Searching...';
-       
-       try {
-           let allData = [];
-           let nextUrl = `https://graph.facebook.com/v19.0/search?type=adinterest&q=${encodeURIComponent(query)}&limit=500&access_token=${ACCESS_TOKEN}`;
-           
-           // Fetch multiple pages to get more results
-           while (nextUrl && allData.length < 1000) {
-               const response = await fetch(nextUrl);
-               const data = await response.json();
-               
-               if (data.error) {
-                   throw new Error(data.error.message);
-               }
+        // Profile click handler
+        profileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const profileDropdown = document.createElement('div');
+            profileDropdown.className = 'dropdown show';
+            profileDropdown.style.right = '60px';
+            profileDropdown.innerHTML = `
+                <div class="dropdown-item" style="pointer-events: none;">
+                    <img src="${currentUser.photoURL || ''}" alt="Profile" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
+                    <div>
+                        <div style="font-weight: 600;">${currentUser.displayName || 'User'}</div>
+                        <div style="font-size: 12px; opacity: 0.7;">${currentUser.email}</div>
+                    </div>
+                </div>
+            `;
+            
+            const existingProfileDropdown = document.querySelector('.profile-dropdown');
+            if (existingProfileDropdown) {
+                existingProfileDropdown.remove();
+            }
+            
+            profileDropdown.className += ' profile-dropdown';
+            document.querySelector('.profile-section').appendChild(profileDropdown);
+            
+            setTimeout(() => {
+                document.addEventListener('click', function closeProfileDropdown(e) {
+                    if (!profileDropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+                        profileDropdown.remove();
+                        document.removeEventListener('click', closeProfileDropdown);
+                    }
+                });
+            }, 0);
+        });
 
-               allData = [...allData, ...(data.data || [])];
-               nextUrl = data.paging && data.paging.next ? data.paging.next : null;
-           }
+        // Search interests function
+        async function searchInterests() {
+            if (isLoading) return;
+            
+            const query = searchInput.value.trim();
+            if (!query) {
+                showToast('Please enter a search term', 'error');
+                return;
+            }
 
-           allInterests = allData;
-           await updateSearchCount();
-           displayResults();
-           
-       } catch (error) {
-           console.error('Search error:', error);
-           showToast('Search failed. Please try again.', 'error');
-       } finally {
-           isLoading = false;
-           exploreBtn.disabled = false;
-           exploreBtn.innerHTML = '🔍 Explore';
-       }
-   }
+            if (!canPerformSearch()) {
+                window.location.href = 'limitexist.html';
+                return;
+            }
 
-   // Display search results
-   function displayResults() {
-       resultsCount.textContent = `Search Results: ${allInterests.length}`;
-       
-       if (allInterests.length === 0) {
-           resultsBody.innerHTML = '<div class="empty-state"><h3>No results found</h3><p>Try different keywords</p></div>';
-           return;
-       }
+            isLoading = true;
+            exploreBtn.disabled = true;
+            exploreBtn.innerHTML = '<div class="spinner"></div> Searching...';
+            
+            try {
+                let allData = [];
+                let nextUrl = `https://graph.facebook.com/v19.0/search?type=adinterest&q=${encodeURIComponent(query)}&limit=500&access_token=${ACCESS_TOKEN}`;
+                
+                // Fetch multiple pages to get more results
+                while (nextUrl && allData.length < 1000) {
+                    const response = await fetch(nextUrl);
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        throw new Error(data.error.message);
+                    }
 
-       resultsBody.innerHTML = allInterests.map((interest, index) => `
-           <div class="table-row">
-               <div>
-                   <input type="checkbox" class="checkbox" data-interest='${JSON.stringify(interest)}' onchange="toggleInterest(this)">
-               </div>
-               <div>${index + 1}</div>
-               <div class="interest-name">${interest.name}</div>
-           </div>
-       `).join('');
-   }
+                    allData = [...allData, ...(data.data || [])];
+                    nextUrl = data.paging && data.paging.next ? data.paging.next : null;
+                }
 
-   // Toggle interest selection
-   function toggleInterest(checkbox) {
-       try {
-           const interest = JSON.parse(checkbox.dataset.interest);
+                allInterests = allData;
+                await updateSearchCount();
+                displayResults();
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                showToast('Search failed. Please try again.', 'error');
+            } finally {
+                isLoading = false;
+                exploreBtn.disabled = false;
+                exploreBtn.innerHTML = '🔍 Explore';
+            }
+        }
 
-           if (checkbox.checked) {
-               const alreadyExists = selectedInterests.some(item => item.id === interest.id);
-               if (!alreadyExists) {
-                   selectedInterests.push(interest);
-               }
-           } else {
-               selectedInterests = selectedInterests.filter(item => item.id !== interest.id);
-           }
+        // Display search results
+        function displayResults() {
+            resultsCount.textContent = `Search Results: ${allInterests.length}`;
+            
+            if (allInterests.length === 0) {
+                resultsBody.innerHTML = '<div class="empty-state"><h3>No results found</h3><p>Try different keywords</p></div>';
+                return;
+            }
 
-           updateSelectedList();
-           showToast(`${interest.name} ${checkbox.checked ? 'selected' : 'removed'}`);
-       } catch (error) {
-           console.error('Toggle interest error:', error);
-           showToast('Error selecting interest', 'error');
-       }
-   }
+            resultsBody.innerHTML = allInterests.map((interest, index) => {
+                const isSelected = selectedInterests.find(item => item.id === interest.id);
+                return `
+                    <div class="table-row" onclick="toggleInterestByRow('${interest.id}')">
+                        <div onclick="event.stopPropagation();">
+                            <input type="checkbox" class="checkbox" ${isSelected ? 'checked' : ''} 
+                                   data-interest-id="${interest.id}" 
+                                   onchange="toggleInterestByCheckbox('${interest.id}')">
+                        </div>
+                        <div>${index + 1}</div>
+                        <div class="interest-name">${interest.name}</div>
+                        <div style="color: #3498db; font-weight: 600;">${formatAudienceSize(interest.audience_size)}</div>
+                        <div style="color: #9b59b6; font-size: 12px;">${interest.path ? interest.path.join(' > ') : 'N/A'}</div>
+                        <div style="color: #f39c12; font-size: 12px;">${interest.topic || 'N/A'}</div>
+                    </div>
+                `;
+            }).join('');
+        }
 
-   // Select all interests
-   function selectAll() {
-       if (!allInterests || allInterests.length === 0) {
-           showToast('No interests found to select', 'error');
-           return;
-       }
+        // Format audience size
+        function formatAudienceSize(size) {
+            if (!size) return 'N/A';
+            if (size >= 1000000) {
+                return (size / 1000000).toFixed(1) + 'M';
+            }
+            if (size >= 1000) {
+                return (size / 1000).toFixed(1) + 'K';
+            }
+            return size.toString();
+        }
 
-       const checkboxes = document.querySelectorAll('.checkbox');
-       checkboxes.forEach(checkbox => {
-           checkbox.checked = true;
-       });
+        // Toggle interest by row click
+        function toggleInterestByRow(interestId) {
+            const checkbox = document.querySelector(`input[data-interest-id="${interestId}"]`);
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+                toggleInterestByCheckbox(interestId);
+            }
+        }
 
-       selectedInterests = allInterests.map(i => ({ ...i }));
-       updateSelectedList();
-       showToast(`All ${allInterests.length} interests selected`);
-   }
+        // Toggle interest by checkbox
+        function toggleInterestByCheckbox(interestId) {
+            const interest = allInterests.find(item => item.id === interestId);
+            if (!interest) return;
 
-   // Update selected list
-   function updateSelectedList() {
-       selectedCount.textContent = selectedInterests.length;
+            const checkbox = document.querySelector(`input[data-interest-id="${interestId}"]`);
+            const isChecked = checkbox.checked;
 
-       if (selectedInterests.length === 0) {
-           selectedList.innerHTML = `
-               <div class="empty-state">
-                   <h4>No interests selected</h4>
-                   <p>Select interests from the left to see them here</p>
-               </div>
-           `;
-           return;
-       }
+            if (isChecked) {
+                if (!selectedInterests.find(item => item.id === interestId)) {
+                    selectedInterests.push(interest);
+                }
+            } else {
+                selectedInterests = selectedInterests.filter(item => item.id !== interestId);
+            }
 
-       selectedList.innerHTML = selectedInterests.map(interest => `
-           <div class="selected-item">
-               <span>${interest.name}</span>
-               <button class="remove-btn" onclick="removeInterest('${interest.id}')">×</button>
-           </div>
-       `).join('');
-   }
+            updateSelectedList();
+        }
 
-   // Remove interest
-   function removeInterest(interestId) {
-       try {
-           const interest = selectedInterests.find(item => item.id === interestId);
-           selectedInterests = selectedInterests.filter(item => item.id !== interestId);
+        // Update selected interests display
+        function updateSelectedList() {
+            selectedCount.textContent = selectedInterests.length;
+            
+            if (selectedInterests.length === 0) {
+                selectedList.innerHTML = '<div class="empty-state"><h4>No interests selected</h4><p>Select interests from the left to see them here</p></div>';
+                return;
+            }
 
-           const checkbox = document.querySelector(`input[data-interest*='"id":"${interestId}"']`);
-           if (checkbox) checkbox.checked = false;
+            selectedList.innerHTML = selectedInterests.map(interest => `
+                <div class="selected-item">
+                    <div>
+                        <div style="font-weight: 500;">${interest.name}</div>
+                        <div style="font-size: 12px; opacity: 0.7; color: #3498db;">${formatAudienceSize(interest.audience_size)}</div>
+                    </div>
+                    <button class="remove-btn" onclick="removeInterest('${interest.id}')">×</button>
+                </div>
+            `).join('');
+        }
 
-           updateSelectedList();
-           showToast(`${interest?.name || 'Interest'} removed`);
-       } catch (error) {
-           console.error('Remove interest error:', error);
-           showToast('Error removing interest', 'error');
-       }
-   }
+        // Remove interest from selection
+        function removeInterest(interestId) {
+            selectedInterests = selectedInterests.filter(item => item.id !== interestId);
+            
+            // Uncheck the checkbox in results
+            const checkbox = document.querySelector(`input[data-interest-id="${interestId}"]`);
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+            
+            updateSelectedList();
+        }
 
-   // Clear selection
-   function clearSelection() {
-       const checkboxes = document.querySelectorAll('.checkbox');
-       checkboxes.forEach(cb => cb.checked = false);
-       selectedInterests = [];
-       updateSelectedList();
-       showToast('All selections cleared');
-   }
+        // Select all interests
+        function selectAll() {
+            allInterests.forEach(interest => {
+                if (!selectedInterests.find(item => item.id === interest.id)) {
+                    selectedInterests.push(interest);
+                }
+            });
+            
+            // Check all checkboxes
+            const checkboxes = document.querySelectorAll('.checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            
+            updateSelectedList();
+        }
 
-   // Clear selected interests
-   function clearSelected() {
-       selectedInterests = [];
-       document.querySelectorAll('.checkbox').forEach(cb => cb.checked = false);
-       updateSelectedList();
-       showToast('Selected interests cleared');
-   }
+        // Clear selection
+        function clearSelection() {
+            const checkboxes = document.querySelectorAll('.checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            selectedInterests = [];
+            updateSelectedList();
+        }
 
-   // Copy selected interests
-   function copySelected() {
-       if (selectedInterests.length === 0) {
-           showToast('No interests to copy', 'error');
-           return;
-       }
+        // Clear selected interests
+        function clearSelected() {
+            selectedInterests = [];
+            const checkboxes = document.querySelectorAll('.checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateSelectedList();
+        }
 
-       const text = selectedInterests.map(i => i.name).join(', ');
-       navigator.clipboard.writeText(text).then(() => {
-           showToast(`${selectedInterests.length} interests copied`);
-       }).catch(() => {
-           showToast('Copy failed', 'error');
-       });
-   }
+        // Copy selected interests
+        function copySelected() {
+            if (selectedInterests.length === 0) {
+                showToast('No interests selected', 'error');
+                return;
+            }
 
-   // Download selected interests
-   function downloadSelected() {
-       if (selectedInterests.length === 0) {
-           showToast('No interests selected to download', 'error');
-           return;
-       }
+            const interestNames = selectedInterests.map(interest => interest.name).join('\n');
+            
+            navigator.clipboard.writeText(interestNames).then(() => {
+                showToast('Interests copied to clipboard!');
+            }).catch(() => {
+                showToast('Failed to copy interests', 'error');
+            });
+        }
 
-       const keyword = searchInput.value.trim() || 'interests';
-       const content = `Total: ${selectedInterests.length} interests\n\n${selectedInterests.map((interest, index) => `${index + 1}. ${interest.name}`).join('\n')}\n\nCopy-ready:\n${selectedInterests.map(i => i.name).join(', ')}`;
+        // Download selected interests
+        function downloadSelected() {
+            if (selectedInterests.length === 0) {
+                showToast('No interests selected', 'error');
+                return;
+            }
 
-       const blob = new Blob([content], { type: 'text/plain' });
-       const url = URL.createObjectURL(blob);
-       const a = document.createElement('a');
-       a.href = url;
-       a.download = `${keyword}_interests.txt`;
-       a.click();
-       URL.revokeObjectURL(url);
+            const interestNames = selectedInterests.map(interest => interest.name).join('\n');
+            const blob = new Blob([interestNames], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `facebook-interests-${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showToast('Interests downloaded!');
+        }
 
-       showToast('Downloaded successfully');
-   }
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
 
-   // Show toast notification
-   function showToast(message, type = 'success') {
-       toast.textContent = message;
-       toast.className = `toast ${type === 'error' ? 'error' : 'success'}`;
-       toast.classList.add('show');
+        // Global functions
+        window.toggleInterestByRow = toggleInterestByRow;
+        window.toggleInterestByCheckbox = toggleInterestByCheckbox;
+        window.removeInterest = removeInterest;
+        window.selectAll = selectAll;
+        window.clearSelection = clearSelection;
+        window.clearSelected = clearSelected;
+        window.copySelected = copySelected;
+        window.downloadSelected = downloadSelected;
 
-       setTimeout(() => {
-           toast.classList.remove('show');
-       }, 3000);
-   }
+        // Logout function
+        window.logout = async function() {
+            try {
+                await signOut(auth);
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                showToast('Logout failed', 'error');
+            }
+        };
 
-   // Event listeners
-   exploreBtn.addEventListener('click', searchInterests);
-   searchInput.addEventListener('keypress', (e) => {
-       if (e.key === 'Enter') searchInterests();
-   });
-   selectAllBtn.addEventListener('click', selectAll);
-   clearBtn.addEventListener('click', clearSelection);
-   copyBtn.addEventListener('click', copySelected);
-   downloadBtn.addEventListener('click', downloadSelected);
-   clearSelectedBtn.addEventListener('click', clearSelected);
-   upgradeBtn.addEventListener('click', () => window.location.href = 'plans.html');
-   
-   // Menu toggle
-   menuBtn.addEventListener('click', (e) => {
-       e.stopPropagation();
-       dropdown.classList.toggle('show');
-   });
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Auto-focus search input
+            searchInput.focus();
+            
+            // Initialize empty selected list
+            updateSelectedList();
+        });
 
-   // Close dropdown when clicking outside
-   document.addEventListener('click', (e) => {
-       if (!dropdown.contains(e.target) && !menuBtn.contains(e.target)) {
-           dropdown.classList.remove('show');
-       }
-   });
-
-   // Profile click handler
-   profileBtn.addEventListener('click', (e) => {
-       e.stopPropagation();
-       const profileDropdown = document.createElement('div');
-       profileDropdown.className = 'dropdown show';
-       profileDropdown.style.right = '60px';
-       profileDropdown.innerHTML = `
-           <div class="dropdown-item" style="pointer-events: none;">
-               <img src="${currentUser.photoURL || ''}" alt="Profile" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
-               <div>
-                   <div style="font-weight: 600;">${currentUser.displayName || 'User'}</div>
-                   <div style="font-size: 12px; opacity: 0.7;">${currentUser.email}</div>
-               </div>
-           </div>
-       `;
-       
-       const existingProfileDropdown = document.querySelector('.profile-dropdown');
-       if (existingProfileDropdown) {
-           existingProfileDropdown.remove();
-       }
-       
-       profileDropdown.className += ' profile-dropdown';
-       document.querySelector('.profile-section').appendChild(profileDropdown);
-       
-       setTimeout(() => {
-           document.addEventListener('click', function closeProfileDropdown(e) {
-               if (!profileDropdown.contains(e.target) && !profileBtn.contains(e.target)) {
-                   profileDropdown.remove();
-                   document.removeEventListener('click', closeProfileDropdown);
-               }
-           });
-       }, 0);
-   });
-
-   // Make functions globally accessible
-   window.toggleInterest = toggleInterest;
-   window.removeInterest = removeInterest;
-   window.clearSelection = clearSelection;
-   window.clearSelected = clearSelected;
-   window.copySelected = copySelected;
-   window.downloadSelected = downloadSelected;
-   window.selectAll = selectAll;
-
-   // Logout function
-   window.logout = async function() {
-       try {
-           await signOut(auth);
-           window.location.href = 'index.html';
-       } catch (error) {
-           console.error('Logout error:', error);
-           showToast('Logout failed', 'error');
-       }
-   };
-
-   // Initialize on page load
-   document.addEventListener('DOMContentLoaded', () => {
-       // Auto-focus search input
-       searchInput.focus();
-       
-       // Initialize empty selected list
-       updateSelectedList();
-   });
-
-</script>
+    </script>
 </body>
 </html>
