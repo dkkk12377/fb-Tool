@@ -973,136 +973,137 @@ z-index: 100;
         }
 
         // Toggle interest selection
-        function toggleInterest(checkbox) {
-            const interest = JSON.parse(checkbox.dataset.interest);
-            
-            if (checkbox.checked) {
-                if (!selectedInterests.find(item => item.id === interest.id)) {
-                    selectedInterests.push(interest);
-                }
-            } else {
-                selectedInterests = selectedInterests.filter(item => item.id !== interest.id);
-            }
-            
-            updateSelectedList();
+        // ✅ toggleInterest function
+function toggleInterest(checkbox) {
+    const interest = JSON.parse(checkbox.dataset.interest);
+
+    if (checkbox.checked) {
+        const alreadyExists = selectedInterests.some(item => item.id === interest.id);
+        if (!alreadyExists) {
+            selectedInterests.push(interest);
         }
+    } else {
+        selectedInterests = selectedInterests.filter(item => item.id !== interest.id);
+    }
 
-        // Update selected interests display
-        function updateSelectedList() {
-            selectedCount.textContent = selectedInterests.length;
-            
-            if (selectedInterests.length === 0) {
-                selectedList.innerHTML = '<div class="empty-state"><h4>No interests selected</h4><p>Select interests from the left to see them here</p></div>';
-                return;
-            }
+    updateSelectedList();
+    showToast(`${interest.name} ${checkbox.checked ? 'selected' : 'removed'}`);
+}
 
-            selectedList.innerHTML = selectedInterests.map(interest => `
-                <div class="selected-item">
-                    <span>${interest.name}</span>
-                    <button class="remove-btn" onclick="removeInterest('${interest.id}')">×</button>
-                </div>
-            `).join('');
-        }
+// ✅ selectAll function
+function selectAll() {
+    if (!allInterests || allInterests.length === 0) {
+        showToast('No interests found to select', 'error');
+        return;
+    }
 
-        // Remove interest from selection
-        function removeInterest(interestId) {
-            selectedInterests = selectedInterests.filter(item => item.id !== interestId);
-            
-            // Uncheck the checkbox in results
-            const checkbox = document.querySelector(`input[data-interest*='"id":"${interestId}"']`);
-            if (checkbox) {
-                checkbox.checked = false;
-            }
-            
-            updateSelectedList();
-        }
+    const checkboxes = document.querySelectorAll('.checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+    });
 
-        // Select all interests
-      function selectAll() {
-            if (allInterests.length === 0) {
-                showToast('No interests to select', 'error');
-                return;
-            }
+    selectedInterests = allInterests.map(i => ({ ...i }));
+    updateSelectedList();
+    showToast(`All ${allInterests.length} interests selected`);
+}
 
-            const checkboxes = document.querySelectorAll('.checkbox');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = true;
-            });
+// ✅ updateSelectedList function
+function updateSelectedList() {
+    selectedCount.textContent = selectedInterests.length;
 
-            selectedInterests = [...allInterests];
-            updateSelectedList();
-            showToast(`Selected all ${allInterests.length} interests`);
-        }
+    if (selectedInterests.length === 0) {
+        selectedList.innerHTML = `
+            <div class="empty-state">
+                <h4>No interests selected</h4>
+                <p>Select interests from the left to see them here</p>
+            </div>
+        `;
+        return;
+    }
 
-        // Clear selection
-        function clearSelection() {
-            const checkboxes = document.querySelectorAll('.checkbox');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = false;
-            });
-            selectedInterests = [];
-            updateSelectedList();
-        }
+    selectedList.innerHTML = selectedInterests.map(interest => `
+        <div class="selected-item">
+            <span>${interest.name}</span>
+            <button class="remove-btn" onclick="removeInterest('${interest.id}')">×</button>
+        </div>
+    `).join('');
+}
 
-        // Clear selected interests
-        function clearSelected() {
-            selectedInterests = [];
-            const checkboxes = document.querySelectorAll('.checkbox');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = false;
-            });
-            updateSelectedList();
-        }
+// ✅ removeInterest function
+function removeInterest(interestId) {
+    const interest = selectedInterests.find(item => item.id === interestId);
+    selectedInterests = selectedInterests.filter(item => item.id !== interestId);
 
-        // Copy selected interests
-        function copySelected() {
-            if (selectedInterests.length === 0) {
-                showToast('No interests selected', 'error');
-                return;
-            }
+    const checkbox = document.querySelector(`input[data-interest*='"id":"${interestId}"']`);
+    if (checkbox) checkbox.checked = false;
 
-            const interestNames = selectedInterests.map(interest => interest.name).join('\n');
-            
-            navigator.clipboard.writeText(interestNames).then(() => {
-                showToast('Interests copied to clipboard!');
-            }).catch(() => {
-                showToast('Failed to copy interests', 'error');
-            });
-        }
+    updateSelectedList();
+    showToast(`${interest?.name || 'Interest'} removed`);
+}
 
-        // Download selected interests
-        function downloadSelected() {
-            if (selectedInterests.length === 0) {
-                showToast('No interests selected', 'error');
-                return;
-            }
+// ✅ clearSelection function
+function clearSelection() {
+    const checkboxes = document.querySelectorAll('.checkbox');
+    checkboxes.forEach(cb => cb.checked = false);
+    selectedInterests = [];
+    updateSelectedList();
+    showToast('All selections cleared');
+}
 
-            const interestNames = selectedInterests.map(interest => interest.name).join('\n');
-            const blob = new Blob([interestNames], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `facebook-interests-${new Date().toISOString().split('T')[0]}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            showToast('Interests downloaded!');
-        }
+// ✅ clearSelected function
+function clearSelected() {
+    selectedInterests = [];
+    document.querySelectorAll('.checkbox').forEach(cb => cb.checked = false);
+    updateSelectedList();
+    showToast('Selected interests cleared');
+}
 
-        // Show toast notification
-        function showToast(message, type = 'success') {
-            toast.textContent = message;
-            toast.className = `toast ${type}`;
-            toast.classList.add('show');
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
+// ✅ copySelected function
+function copySelected() {
+    if (selectedInterests.length === 0) {
+        showToast('No interests to copy', 'error');
+        return;
+    }
 
+    const text = selectedInterests.map(i => i.name).join(', ');
+    navigator.clipboard.writeText(text).then(() => {
+        showToast(`${selectedInterests.length} interests copied`);
+    }).catch(() => {
+        showToast('Copy failed', 'error');
+    });
+}
+
+// ✅ downloadSelected function
+function downloadSelected() {
+    if (selectedInterests.length === 0) {
+        showToast('No interests selected to download', 'error');
+        return;
+    }
+
+    const keyword = searchInput.value.trim() || 'interests';
+    const content = `Total: ${selectedInterests.length} interests\n\n${selectedInterests.map((interest, index) => `${index + 1}. ${interest.name}`).join('\n')}\n\nCopy-ready:\n${selectedInterests.map(i => i.name).join(', ')}`;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${keyword}_interests.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    showToast('Downloaded successfully');
+}
+
+// ✅ showToast function
+function showToast(message, type = 'success') {
+    toast.textContent = message;
+    toast.className = `toast ${type === 'error' ? 'error' : 'success'}`;
+    toast.classList.add('show');
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
         // Logout function
         window.logout = async function() {
             try {
