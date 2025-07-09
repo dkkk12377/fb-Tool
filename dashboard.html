@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interest Optimizer | Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+position: relative;
+z-index: 100;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .welcome-text {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .welcome-text span {
+            color: #ff6b6b;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .plan-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .plan-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .searches-left {
+            color: #2ecc71;
+            font-weight: 600;
+        }
+
+        .upgrade-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .upgrade-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+      
+.profile-section {
+    position: relative;
+    z-index: 1002;
+}
+
+        .profile-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .profile-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .profile-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .menu-dots {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-dots:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+       .dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: rgba(0, 0, 0, 0.95);
+    border-radius: 10px;
+    padding: 10px 0;
+    min-width: 200px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    z-index: 10000;
+    display: none;
+}
+
+.profile-dropdown {
+    z-index: 1001;
+}
+
+        .dropdown.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            text-decoration: none;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-item.active {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
+
+        .dropdown-separator {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 5px 0;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+            height: calc(100vh - 150px);
+        }
+
+        .search-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .search-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            color: white;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .search-input:focus {
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2);
+        }
+
+        .explore-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .explore-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .explore-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .results-count {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .select-all-btn {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .select-all-btn:hover {
+            background: rgba(52, 152, 219, 0.3);
+        }
+
+        .clear-btn {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: rgba(231, 76, 60, 0.3);
+        }
+
+        .results-table {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .table-header {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            display: grid;
+            grid-template-columns: 50px 50px 1fr;
+            gap: 15px;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .table-row {
+            padding: 15px;
+            display: grid;
+            grid-template-columns: 50px 50px 1fr;
+            gap: 15px;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .table-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: #ff6b6b;
+        }
+
+        .interest-name {
+            font-weight: 500;
+            color: #ffffff;
+        }
+
+        .selected-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            height: fit-content;
+        }
+
+        .selected-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .selected-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .selected-count {
+            background: #ff6b6b;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .selected-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .selected-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .selected-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .remove-btn {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .remove-btn:hover {
+            background: rgba(231, 76, 60, 0.4);
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, #3498db 0%, #5dade2 100%);
+            color: white;
+        }
+
+        .copy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #2ecc71 0%, #58d68d 100%);
+            color: white;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+
+        .clear-selected-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #ec7063 100%);
+            color: white;
+        }
+
+        .clear-selected-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #ff6b6b;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2ecc71;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            transform: translateX(300px);
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            background: #e74c3c;
+        }
+
+        .scrollbar-custom {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+        }
+
+        .scrollbar-custom::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .scrollbar-custom::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .scrollbar-custom::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .selected-section {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .table-header, .table-row {
+                grid-template-columns: 40px 40px 1fr;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="welcome-text">
+                <span>👋</span> Hi, <span id="userName">Loading...</span>
+            </div>
+            <div class="header-right">
+                <div class="plan-info">
+                    <span class="plan-badge" id="planBadge">Free</span>
+                    <span class="searches-left" id="searchesLeft">0/3 searches</span>
+                </div>
+                <button class="upgrade-btn" id="upgradeBtn" style="display: none;">
+                    ⬆️ Get Unlimited Searches
+                </button>
+                <div class="profile-section">
+                    <button class="profile-btn" id="profileBtn">
+                        <img id="profileImage" src="" alt="Profile" style="display: none;">
+                        <span id="profileInitial">?</span>
+                    </button>
+                </div>
+                <div class="profile-section">
+                    <button class="menu-dots" id="menuBtn">⋮</button>
+                    <div class="dropdown" id="dropdown">
+                        <div class="dropdown-item active">
+                            <span>🏠</span> Home
+                        </div>
+                        <div class="dropdown-item" onclick="window.location.href='plans.html'">
+                            <span>💎</span> Plans
+                        </div>
+                        <div class="dropdown-item" onclick="window.location.href='profile.html'">
+                            <span>👤</span> Profile
+                        </div>
+                        <div class="dropdown-separator"></div>
+                        <div class="dropdown-item" onclick="window.location.href='content-policy.html'">
+                            <span>📋</span> Content Policy
+                        </div>
+                        <div class="dropdown-item" onclick="window.location.href='faq.html'">
+                            <span>❓</span> FAQ
+                        </div>
+                        <div class="dropdown-item" onclick="window.location.href='about.html'">
+                            <span>ℹ️</span> About
+                        </div>
+                        <div class="dropdown-separator"></div>
+                        <div class="dropdown-item" onclick="logout()">
+                            <span>🚪</span> Logout
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="search-section">
+                <div class="search-container">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search Interests (e.g., fitness, yoga, golf)..." value="golf">
+                    <button class="explore-btn" id="exploreBtn">
+                        🔍 Explore
+                    </button>
+                </div>
+
+                <div class="results-header">
+                    <div class="results-count" id="resultsCount">Search Results: 0</div>
+                    <div class="header-actions">
+                        <button class="select-all-btn" id="selectAllBtn">📋 Select All</button>
+                        <button class="clear-btn" id="clearBtn">🗑️ Clear Selection</button>
+                    </div>
+                </div>
+
+                <div class="results-table" id="resultsTable">
+                    <div class="table-header">
+                        <div></div>
+                        <div>SL</div>
+                        <div>Interest Name</div>
+                    </div>
+                    <div id="resultsBody">
+                        <div class="empty-state">
+                            <h3>🔍 Ready to Explore</h3>
+                            <p>Enter a keyword and click "Explore" to find Facebook interests</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="selected-section">
+                <div class="selected-header">
+                    <div class="selected-title">✅ Selected Interests</div>
+                    <div class="selected-count" id="selectedCount">0</div>
+                </div>
+
+                <div class="selected-list scrollbar-custom" id="selectedList">
+                    <div class="empty-state">
+                        <h4>No interests selected</h4>
+                        <p>Select interests from the left to see them here</p>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="action-btn copy-btn" id="copyBtn">
+                        📋 Copy All
+                    </button>
+                    <button class="action-btn download-btn" id="downloadBtn">
+                        💾 Download
+                    </button>
+                    <button class="action-btn clear-selected-btn" id="clearSelectedBtn">
+                        🗑️ Clear Selected
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB-wOqU0JnvWM3Nt91xhac2x_qO5a54GMQ",
+            authDomain: "dinesh-3b413.firebaseapp.com",
+            projectId: "dinesh-3b413",
+            storageBucket: "dinesh-3b413.appspot.com",
+            messagingSenderId: "1053189064237",
+            appId: "1:1053189064237:web:d261dbebb5e7299e829aa4",
+            measurementId: "G-FPVH4NC1ML"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const db = getFirestore();
+
+        let currentUser = null;
+        let userData = null;
+        let allInterests = [];
+        let selectedInterests = [];
+        let isLoading = false;
+
+        const ACCESS_TOKEN = "EAAcSUOy3V3UBO2KQAqYBgtYgLJXhuJMZAyY60rtRsGvRdmoJJ0BBxUCGX7LvokO8R8ihqYrXoUOZCgBQxMufmu4CAvuwpnLV1nJC1KBiYd2gEvfpnQLw1uInLZCJWRs8Qx4e8Fx5EZCp0JNLCEDnStZB4fKS02gl8ZBqkuPAwhWDZBJqnkZCtxwCwqt0bXK0NPZC0";
+
+        // DOM elements
+        const userName = document.getElementById('userName');
+        const planBadge = document.getElementById('planBadge');
+        const searchesLeft = document.getElementById('searchesLeft');
+        const upgradeBtn = document.getElementById('upgradeBtn');
+        const profileBtn = document.getElementById('profileBtn');
+        const profileImage = document.getElementById('profileImage');
+        const profileInitial = document.getElementById('profileInitial');
+        const menuBtn = document.getElementById('menuBtn');
+        const dropdown = document.getElementById('dropdown');
+        const searchInput = document.getElementById('searchInput');
+        const exploreBtn = document.getElementById('exploreBtn');
+        const resultsCount = document.getElementById('resultsCount');
+        const resultsBody = document.getElementById('resultsBody');
+        const selectedList = document.getElementById('selectedList');
+        const selectedCount = document.getElementById('selectedCount');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const clearSelectedBtn = document.getElementById('clearSelectedBtn');
+        const toast = document.getElementById('toast');
+
+        // Auth state observer
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                await loadUserData();
+                updateUI();
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Load user data from Firestore
+        async function loadUserData() {
+            try {
+                const userRef = doc(db, "users", currentUser.uid);
+                const userSnap = await getDoc(userRef);
+                
+                if (userSnap.exists()) {
+                    userData = userSnap.data();
+                    
+                    // Reset daily searches if it's a new day
+                    const today = new Date().toDateString();
+                    if (userData.lastSearchDate !== today) {
+                        userData.searchesUsed = 0;
+                        userData.lastSearchDate = today;
+                        await setDoc(userRef, {
+                            searchesUsed: 0,
+                            lastSearchDate: today,
+                            updatedAt: serverTimestamp()
+                        }, { merge: true });
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading user data:", error);
+            }
+        }
+
+        // Update UI with user data
+        function updateUI() {
+            if (!currentUser || !userData) return;
+
+            // Update user name
+            userName.textContent = currentUser.displayName || 'User';
+
+            // Update profile image
+            if (currentUser.photoURL) {
+                profileImage.src = currentUser.photoURL;
+                profileImage.style.display = 'block';
+                profileInitial.style.display = 'none';
+            } else {
+                profileInitial.textContent = currentUser.displayName ? currentUser.displayName.charAt(0).toUpperCase() : 'U';
+                profileInitial.style.display = 'block';
+                profileImage.style.display = 'none';
+            }
+
+            // Update plan info
+            const plan = userData.currentPlan || 'free';
+            planBadge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
+            
+            if (plan === 'free') {
+                const maxSearches = 3;
+                const used = userData.searchesUsed || 0;
+                const remaining = Math.max(0, maxSearches - used);
+                searchesLeft.textContent = `${remaining}/${maxSearches} searches`;
+                upgradeBtn.style.display = remaining === 0 ? 'flex' : 'none';
+                
+                if (remaining === 0) {
+                    searchesLeft.style.color = '#e74c3c';
+                } else {
+                    searchesLeft.style.color = '#2ecc71';
+                }
+            } else {
+                searchesLeft.textContent = 'Unlimited searches';
+                upgradeBtn.style.display = 'none';
+            }
+        }
+
+        // Check if user can perform search
+        function canPerformSearch() {
+            if (!userData) return false;
+            
+            const plan = userData.currentPlan || 'free';
+            if (plan === 'monthly') return true;
+            
+            const maxSearches = 3;
+            const used = userData.searchesUsed || 0;
+            return used < maxSearches;
+        }
+
+        // Update search count
+        async function updateSearchCount() {
+            if (!currentUser || !userData) return;
+            
+            const plan = userData.currentPlan || 'free';
+            if (plan === 'monthly') return;
+            
+            const newCount = (userData.searchesUsed || 0) + 1;
+            userData.searchesUsed = newCount;
+            
+            const userRef = doc(db, "users", currentUser.uid);
+            await setDoc(userRef, {
+                searchesUsed: newCount,
+                lastSearchDate: new Date().toDateString(),
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            
+            updateUI();
+        }
+
+        // Event listeners
+        exploreBtn.addEventListener('click', searchInterests);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchInterests();
+        });
+        selectAllBtn.addEventListener('click', selectAll);
+        clearBtn.addEventListener('click', clearSelection);
+        copyBtn.addEventListener('click', copySelected);
+        downloadBtn.addEventListener('click', downloadSelected);
+        clearSelectedBtn.addEventListener('click', clearSelected);
+        upgradeBtn.addEventListener('click', () => window.location.href = 'plans.html');
+        
+        // Menu toggle
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle('show');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!dropdown.contains(e.target) && !menuBtn.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Profile click handler
+        profileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const profileDropdown = document.createElement('div');
+            profileDropdown.className = 'dropdown show';
+            profileDropdown.style.right = '60px';
+            profileDropdown.innerHTML = `
+                <div class="dropdown-item" style="pointer-events: none;">
+                    <img src="${currentUser.photoURL || ''}" alt="Profile" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
+                    <div>
+                        <div style="font-weight: 600;">${currentUser.displayName || 'User'}</div>
+                        <div style="font-size: 12px; opacity: 0.7;">${currentUser.email}</div>
+                    </div
+</div>
+                </div>
+            `;
+            
+            const existingProfileDropdown = document.querySelector('.profile-dropdown');
+            if (existingProfileDropdown) {
+                existingProfileDropdown.remove();
+            }
+            
+            profileDropdown.className += ' profile-dropdown';
+            document.querySelector('.profile-section').appendChild(profileDropdown);
+            
+            setTimeout(() => {
+                document.addEventListener('click', function closeProfileDropdown(e) {
+                    if (!profileDropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+                        profileDropdown.remove();
+                        document.removeEventListener('click', closeProfileDropdown);
+                    }
+                });
+            }, 0);
+        });
+
+        // Search interests function
+        async function searchInterests() {
+            if (isLoading) return;
+            
+            const query = searchInput.value.trim();
+            if (!query) {
+                showToast('Please enter a search term', 'error');
+                return;
+            }
+
+            if (!canPerformSearch()) {
+                window.location.href = 'limitexist.html';
+                return;
+            }
+
+            isLoading = true;
+            exploreBtn.disabled = true;
+            exploreBtn.innerHTML = '<div class="spinner"></div> Searching...';
+            
+            try {
+                let allData = [];
+                let nextUrl = `https://graph.facebook.com/v19.0/search?type=adinterest&q=${encodeURIComponent(query)}&limit=500&access_token=${ACCESS_TOKEN}`;
+                
+                // Fetch multiple pages to get more results
+                while (nextUrl && allData.length < 1000) {
+                    const response = await fetch(nextUrl);
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        throw new Error(data.error.message);
+                    }
+
+                    allData = [...allData, ...(data.data || [])];
+                    nextUrl = data.paging && data.paging.next ? data.paging.next : null;
+                }
+
+                allInterests = allData;
+                await updateSearchCount();
+                displayResults();
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                showToast('Search failed. Please try again.', 'error');
+            } finally {
+                isLoading = false;
+                exploreBtn.disabled = false;
+                exploreBtn.innerHTML = '🔍 Explore';
+            }
+        }
+
+        // Display search results
+        function displayResults() {
+            resultsCount.textContent = `Search Results: ${allInterests.length}`;
+            
+            if (allInterests.length === 0) {
+                resultsBody.innerHTML = '<div class="empty-state"><h3>No results found</h3><p>Try different keywords</p></div>';
+                return;
+            }
+
+            resultsBody.innerHTML = allInterests.map((interest, index) => `
+                <div class="table-row">
+                    <div>
+                        <input type="checkbox" class="checkbox" data-interest='${JSON.stringify(interest)}' onchange="toggleInterest(this)">
+                    </div>
+                    <div>${index + 1}</div>
+                    <div class="interest-name">${interest.name}</div>
+                </div>
+            `).join('');
+        }
+
+        // Toggle interest selection
+        function toggleInterest(checkbox) {
+            const interest = JSON.parse(checkbox.dataset.interest);
+            
+            if (checkbox.checked) {
+                if (!selectedInterests.find(item => item.id === interest.id)) {
+                    selectedInterests.push(interest);
+                }
+            } else {
+                selectedInterests = selectedInterests.filter(item => item.id !== interest.id);
+            }
+            
+            updateSelectedList();
+        }
+
+        // Update selected interests display
+        function updateSelectedList() {
+            selectedCount.textContent = selectedInterests.length;
+            
+            if (selectedInterests.length === 0) {
+                selectedList.innerHTML = '<div class="empty-state"><h4>No interests selected</h4><p>Select interests from the left to see them here</p></div>';
+                return;
+            }
+
+            selectedList.innerHTML = selectedInterests.map(interest => `
+                <div class="selected-item">
+                    <span>${interest.name}</span>
+                    <button class="remove-btn" onclick="removeInterest('${interest.id}')">×</button>
+                </div>
+            `).join('');
+        }
+
+        // Remove interest from selection
+        function removeInterest(interestId) {
+            selectedInterests = selectedInterests.filter(item => item.id !== interestId);
+            
+            // Uncheck the checkbox in results
+            const checkbox = document.querySelector(`input[data-interest*='"id":"${interestId}"']`);
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+            
+            updateSelectedList();
+        }
+
+        // Select all interests
+        function selectAll() {
+            const checkboxes = document.querySelectorAll('.checkbox');
+            checkboxes.forEach(checkbox => {
+                if (!checkbox.checked) {
+                    checkbox.checked = true;
+                    toggleInterest(checkbox);
+                }
+            });
+        }
+
+        // Clear selection
+        function clearSelection() {
+            const checkboxes = document.querySelectorAll('.checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            selectedInterests = [];
+            updateSelectedList();
+        }
+
+        // Clear selected interests
+        function clearSelected() {
+            selectedInterests = [];
+            const checkboxes = document.querySelectorAll('.checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateSelectedList();
+        }
+
+        // Copy selected interests
+        function copySelected() {
+            if (selectedInterests.length === 0) {
+                showToast('No interests selected', 'error');
+                return;
+            }
+
+            const interestNames = selectedInterests.map(interest => interest.name).join('\n');
+            
+            navigator.clipboard.writeText(interestNames).then(() => {
+                showToast('Interests copied to clipboard!');
+            }).catch(() => {
+                showToast('Failed to copy interests', 'error');
+            });
+        }
+
+        // Download selected interests
+        function downloadSelected() {
+            if (selectedInterests.length === 0) {
+                showToast('No interests selected', 'error');
+                return;
+            }
+
+            const interestNames = selectedInterests.map(interest => interest.name).join('\n');
+            const blob = new Blob([interestNames], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `facebook-interests-${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showToast('Interests downloaded!');
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Logout function
+        window.logout = async function() {
+            try {
+                await signOut(auth);
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                showToast('Logout failed', 'error');
+            }
+        };
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Auto-focus search input
+            searchInput.focus();
+            
+            // Initialize empty selected list
+            updateSelectedList();
+        });
+
+    </script>
+</body>
+</html>
