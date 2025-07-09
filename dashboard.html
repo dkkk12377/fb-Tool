@@ -953,72 +953,48 @@ z-index: 100;
         }
 
         // Display search results
-        function displayResults() {
-            resultsCount.textContent = `Search Results: ${allInterests.length}`;
+        function displayResults(interests, keyword) {
+            allInterests = interests;
+            resultsCount.textContent = `Search Results: ${interests.length}`;
             
-            if (allInterests.length === 0) {
-                resultsBody.innerHTML = '<div class="empty-state"><h3>No results found</h3><p>Try different keywords</p></div>';
+            if (interests.length === 0) {
+                resultsBody.innerHTML = `
+                    <div class="empty-state">
+                        <h3>😔 No Results Found</h3>
+                        <p>No interests found for "${keyword}". Try a different keyword.</p>
+                    </div>
+                `;
                 return;
             }
 
-            resultsBody.innerHTML = allInterests.map((interest, index) => `
+            resultsBody.innerHTML = interests.map((interest, index) => `
                 <div class="table-row">
                     <div>
-                        <input type="checkbox" class="checkbox" data-interest='${JSON.stringify(interest)}' onchange="toggleInterest(this)">
+                        <input type="checkbox" class="checkbox" data-index="${index}" onchange="toggleInterest(${index}, this.checked)">
                     </div>
                     <div>${index + 1}</div>
-                    <div class="interest-name">${interest.name}</div>
+                    <div class="interest-name">${interest}</div>
                 </div>
             `).join('');
+
+            showToast(`Found ${interests.length} interests for "${keyword}"`);
         }
 
-        // Toggle interest selection
-        function toggleInterest(checkbox) {
-            const interest = JSON.parse(checkbox.dataset.interest);
+        function toggleInterest(index, isChecked) {
+            const interest = allInterests[index];
             
-            if (checkbox.checked) {
-                if (!selectedInterests.find(item => item.id === interest.id)) {
+            if (isChecked) {
+                if (!selectedInterests.includes(interest)) {
                     selectedInterests.push(interest);
                 }
             } else {
-                selectedInterests = selectedInterests.filter(item => item.id !== interest.id);
+                selectedInterests = selectedInterests.filter(item => item !== interest);
             }
             
             updateSelectedList();
         }
 
-        // Update selected interests display
-        function updateSelectedList() {
-            selectedCount.textContent = selectedInterests.length;
-            
-            if (selectedInterests.length === 0) {
-                selectedList.innerHTML = '<div class="empty-state"><h4>No interests selected</h4><p>Select interests from the left to see them here</p></div>';
-                return;
-            }
-
-            selectedList.innerHTML = selectedInterests.map(interest => `
-                <div class="selected-item">
-                    <span>${interest.name}</span>
-                    <button class="remove-btn" onclick="removeInterest('${interest.id}')">×</button>
-                </div>
-            `).join('');
-        }
-
-        // Remove interest from selection
-       function removeInterest(name) {
-            selectedInterests = selectedInterests.filter(item => item !== name);
-            
-            // Uncheck the checkbox in results
-            const checkbox = document.querySelector(`input[data-interest*='"id":"${interestId}"']`);
-            if (checkbox) {
-                checkbox.checked = false;
-            }
-            
-            updateSelectedList();
-        }
-
-        // Select all interests
-      function selectAll() {
+        function selectAll() {
             if (allInterests.length === 0) {
                 showToast('No interests to select', 'error');
                 return;
@@ -1034,68 +1010,94 @@ z-index: 100;
             showToast(`Selected all ${allInterests.length} interests`);
         }
 
-        // Clear selection
+        function updateSelectedList() {
+            selectedCount.textContent = selectedInterests.length;
+            
+            if (selectedInterests.length === 0) {
+                selectedList.innerHTML = `
+                    <div class="empty-state">
+                        <h4>No interests selected</h4>
+                        <p>Select interests from the left to see them here</p>
+                    </div>
+                `;
+                return;
+            }
+
+            selectedList.innerHTML = selectedInterests.map(interest => `
+                <div class="selected-item">
+                    <span>${interest}</span>
+                    <button class="remove-btn" onclick="removeInterest('${interest.replace(/'/g, "\\'")}')">×</button>
+                </div>
+            `).join('');
+        }
+
+        function removeInterest(name) {
+            selectedInterests = selectedInterests.filter(item => item !== name);
+            
+            // Uncheck the checkbox in the main table
+            const checkboxes = document.querySelectorAll('.checkbox');
+            checkboxes.forEach((checkbox, index) => {
+                if (allInterests[index] === name) {
+                    checkbox.checked = false;
+                }
+            });
+            
+            updateSelectedList();
+        }
+
         function clearSelection() {
             const checkboxes = document.querySelectorAll('.checkbox');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = false;
-            });
+            checkboxes.forEach(checkbox => checkbox.checked = false);
             selectedInterests = [];
             updateSelectedList();
+            showToast('Selection cleared');
         }
 
-        // Clear selected interests
-        function clearSelected() {
-            selectedInterests = [];
-            const checkboxes = document.querySelectorAll('.checkbox');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = false;
-            });
-            updateSelectedList();
-        }
-
-        // Copy selected interests
         function copySelected() {
             if (selectedInterests.length === 0) {
                 showToast('No interests selected', 'error');
                 return;
             }
 
-            const interestNames = selectedInterests.map(interest => interest.name).join('\n');
-            
-            navigator.clipboard.writeText(interestNames).then(() => {
-                showToast('Interests copied to clipboard!');
+            const copyText = selectedInterests.join(', ');
+            navigator.clipboard.writeText(copyText).then(() => {
+                showToast(`Copied ${selectedInterests.length} interests to clipboard`);
             }).catch(() => {
-                showToast('Failed to copy interests', 'error');
+                showToast('Failed to copy to clipboard', 'error');
             });
         }
 
-        // Download selected interests
         function downloadSelected() {
             if (selectedInterests.length === 0) {
                 showToast('No interests selected', 'error');
                 return;
             }
 
-            const interestNames = selectedInterests.map(interest => interest.name).join('\n');
-            const blob = new Blob([interestNames], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
+            const keyword = searchInput.value.trim() || 'interests';
+            const content = `Total: ${selectedInterests.length} interests\n\n${selectedInterests.map((interest, index) => `${index + 1}. ${interest}`).join('\n')}\n\nCopy-ready format:\n${selectedInterests.join(', ')}`;
             
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `facebook-interests-${new Date().toISOString().split('T')[0]}.txt`;
-            document.body.appendChild(a);
+            a.download = `${keyword}_interests.txt`;
             a.click();
-            document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
-            showToast('Interests downloaded!');
+            showToast(`Downloaded ${selectedInterests.length} interests`);
         }
 
-        // Show toast notification
+        function clearSelected() {
+            selectedInterests = [];
+            const checkboxes = document.querySelectorAll('.checkbox');
+            checkboxes.forEach(checkbox => checkbox.checked = false);
+            updateSelectedList();
+            showToast('Selected interests cleared');
+        }
+
         function showToast(message, type = 'success') {
             toast.textContent = message;
-            toast.className = `toast ${type}`;
+            toast.className = `toast ${type === 'error' ? 'error' : 'success'}`;
             toast.classList.add('show');
             
             setTimeout(() => {
