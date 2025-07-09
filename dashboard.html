@@ -865,10 +865,11 @@ z-index: 100;
            return;
        }
 
-       if (!canPerformSearch()) {
-           window.location.href = 'limitexist.html';
-           return;
-       }
+       const plan = (userData.currentPlan || 'free').toLowerCase();
+if (plan === 'free' && !canPerformSearch()) {
+    window.location.href = 'limitexist.html';
+    return;
+}
 
        isLoading = true;
        exploreBtn.disabled = true;
