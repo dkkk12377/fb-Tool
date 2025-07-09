@@ -907,7 +907,7 @@ z-index: 100;
             if (isLoading) return;
             
             const query = searchInput.value.trim();
-            if (!query) {
+            if (!keyword) {
                 showToast('Please enter a search term', 'error');
                 return;
             }
