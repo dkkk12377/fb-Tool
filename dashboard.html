@@ -1018,14 +1018,20 @@ z-index: 100;
         }
 
         // Select all interests
-        function selectAll() {
+       function selectAll() {
+            if (allInterests.length === 0) {
+                showToast('No interests to select', 'error');
+                return;
+            }
+
             const checkboxes = document.querySelectorAll('.checkbox');
             checkboxes.forEach(checkbox => {
-                if (!checkbox.checked) {
-                    checkbox.checked = true;
-                    toggleInterest(checkbox);
-                }
+                checkbox.checked = true;
             });
+
+            selectedInterests = [...allInterests];
+            updateSelectedList();
+            showToast(`Selected all ${allInterests.length} interests`);
         }
 
         // Clear selection
