@@ -45,14 +45,12 @@
         .welcome-text span {
             color: #ff6b6b;
         }
-.header-right {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    position: relative;
-    overflow: visible;
-    z-index: 5;
-}
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
 
         .plan-info {
             display: flex;
@@ -98,10 +96,8 @@
         }
 
         .profile-section {
-    position: relative;
-    overflow: visible;
-    z-index: 1000;
-}
+            position: relative;
+        }
 
         .profile-btn {
             background: rgba(255, 255, 255, 0.1);
@@ -147,9 +143,9 @@
             background: rgba(255, 255, 255, 0.2);
         }
 
-       .dropdown, .profile-dropdown {
+       .dropdown {
     position: absolute;
-    top: 110%;
+    top: 100%;
     right: 0;
     background: rgba(0, 0, 0, 0.9);
     border-radius: 10px;
@@ -158,10 +154,12 @@
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    z-index: 999;
-    max-height: 400px;
-    overflow-y: auto;
+    z-index: 1000;
     display: none;
+}
+
+.profile-dropdown {
+    z-index: 1001;
 }
 
         .dropdown.show {
@@ -352,16 +350,15 @@
             font-weight: 500;
             color: #ffffff;
         }
-.selected-section {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 20px;
-    padding: 25px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    height: fit-content;
-    z-index: 1;
-    position: relative;
-}
+
+        .selected-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            height: fit-content;
+        }
 
         .selected-header {
             display: flex;
@@ -881,6 +878,7 @@
                         <div style="font-size: 12px; opacity: 0.7;">${currentUser.email}</div>
                     </div
 </div>
+                </div>
             `;
             
             const existingProfileDropdown = document.querySelector('.profile-dropdown');
