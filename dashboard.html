@@ -953,26 +953,28 @@ z-index: 100;
         }
 
         // Display search results
-        function displayResults() {
-            resultsCount.textContent = `Search Results: ${allInterests.length}`;
-            
-            if (allInterests.length === 0) {
-                resultsBody.innerHTML = '<div class="empty-state"><h3>No results found</h3><p>Try different keywords</p></div>';
-                return;
-            }
+      function displayResults() {
+    resultsCount.textContent = `Search Results: ${allInterests.length}`;
 
-            resultsBody.innerHTML = allInterests.map((interest, index) => `
-                <div class="table-row">
-                    <div>
-                        <input type="checkbox" class="checkbox" data-interest='${JSON.stringify(interest)}' onchange="toggleInterest(this)">
-                    </div>
-                    <div>${index + 1}</div>
-                    <div class="interest-name">${interest.name}</div>
+    if (allInterests.length === 0) {
+        resultsBody.innerHTML = '<div class="empty-state"><h3>No results found</h3><p>Try different keywords</p></div>';
+        return;
+    }
+
+    resultsBody.innerHTML = allInterests.map((interest, index) => {
+        const isChecked = selectedInterests.some(item => item.id === interest.id);
+        return `
+            <div class="table-row">
+                <div>
+                    <input type="checkbox" class="checkbox" data-interest='${JSON.stringify(interest)}' onchange="toggleInterest(this)" ${isChecked ? "checked" : ""}>
                 </div>
-            `).join('');
-        }
+                <div>${index + 1}</div>
+                <div class="interest-name">${interest.name}</div>
+            </div>
+        `;
+    }).join('');
+}
 
-        // Toggle interest selection
         // ✅ toggleInterest function
 function toggleInterest(checkbox) {
     const interest = JSON.parse(checkbox.dataset.interest);
@@ -1033,7 +1035,6 @@ function updateSelectedList() {
 
 // ✅ removeInterest function
 function removeInterest(interestId) {
-    // Remove from selected list
     selectedInterests = selectedInterests.filter(item => item.id !== interestId);
 
     // Uncheck matching checkbox
@@ -1049,8 +1050,9 @@ function removeInterest(interestId) {
         }
     });
 
-    updateSelectedList();
+    updateSelectedList(); // ✅ important line
 }
+
 
 // ✅ clearSelection function
 function clearSelection() {
