@@ -1030,20 +1030,23 @@ function updateSelectedList() {
 
 // ✅ removeInterest function
 function removeInterest(interestId) {
-    const interest = selectedInterests.find(item => item.id === interestId);
+    // Remove from selected list
     selectedInterests = selectedInterests.filter(item => item.id !== interestId);
 
-    // checkbox uncheck (based on id inside data-interest)
+    // Uncheck matching checkbox
     const checkboxes = document.querySelectorAll('.checkbox');
     checkboxes.forEach(checkbox => {
-        const data = JSON.parse(checkbox.dataset.interest);
-        if (data.id === interestId) {
-            checkbox.checked = false;
+        try {
+            const data = JSON.parse(checkbox.dataset.interest);
+            if (data.id === interestId) {
+                checkbox.checked = false;
+            }
+        } catch (e) {
+            console.error('Invalid checkbox data-interest:', e);
         }
     });
 
     updateSelectedList();
-    showToast(`${interest?.name || 'Interest'} removed`);
 }
 
 // ✅ clearSelection function
