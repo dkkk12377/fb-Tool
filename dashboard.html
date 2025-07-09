@@ -745,22 +745,6 @@
                 
                 if (userSnap.exists()) {
                     userData = userSnap.data();
-
-// Check if plan expired
-if (userData.expiryDate) {
-    const expiry = new Date(userData.expiryDate);
-    const now = new Date();
-    if (expiry < now) {
-        userData.currentPlan = 'free';
-        userData.expiryDate = null;
-        await setDoc(userRef, {
-            currentPlan: 'free',
-            expiryDate: null,
-            updatedAt: serverTimestamp()
-        }, { merge: true });
-    }
-}
-
                     
                     // Reset daily searches if it's a new day
                     const today = new Date().toDateString();
@@ -878,9 +862,37 @@ if (userData.expiryDate) {
 
         // Profile click handler
         profileBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    dropdown.classList.toggle('show');
-});
+            e.stopPropagation();
+            const profileDropdown = document.createElement('div');
+            profileDropdown.className = 'dropdown show';
+            profileDropdown.style.right = '60px';
+            profileDropdown.innerHTML = `
+                <div class="dropdown-item" style="pointer-events: none;">
+                    <img src="${currentUser.photoURL || ''}" alt="Profile" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
+                    <div>
+                        <div style="font-weight: 600;">${currentUser.displayName || 'User'}</div>
+                        <div style="font-size: 12px; opacity: 0.7;">${currentUser.email}</div>
+                    </div
+</div>
+            `;
+            
+            const existingProfileDropdown = document.querySelector('.profile-dropdown');
+            if (existingProfileDropdown) {
+                existingProfileDropdown.remove();
+            }
+            
+            profileDropdown.className += ' profile-dropdown';
+            document.querySelector('.profile-section').appendChild(profileDropdown);
+            
+            setTimeout(() => {
+                document.addEventListener('click', function closeProfileDropdown(e) {
+                    if (!profileDropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+                        profileDropdown.remove();
+                        document.removeEventListener('click', closeProfileDropdown);
+                    }
+                });
+            }, 0);
+        });
 
         // Search interests function
         async function searchInterests() {
@@ -941,18 +953,10 @@ if (userData.expiryDate) {
                 return;
             }
 
-            // Bind checkboxes to toggleInterest
-setTimeout(() => {
-    document.querySelectorAll('.checkbox').forEach(cb => {
-        cb.addEventListener('change', () => toggleInterest(cb));
-    });
-}, 0);
-
+            resultsBody.innerHTML = allInterests.map((interest, index) => `
                 <div class="table-row">
                     <div>
-                        <input type="checkbox" class="checkbox" data-interest='${JSON.stringify(interest)}'>
-
-
+                        <input type="checkbox" class="checkbox" data-interest='${JSON.stringify(interest)}' onchange="toggleInterest(this)">
                     </div>
                     <div>${index + 1}</div>
                     <div class="interest-name">${interest.name}</div>
