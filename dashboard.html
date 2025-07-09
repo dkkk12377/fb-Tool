@@ -745,30 +745,43 @@ z-index: 100;
    });
 
    // Load user data from Firestore
-   async function loadUserData() {
-       try {
-           const userRef = doc(db, "users", currentUser.uid);
-           const userSnap = await getDoc(userRef);
-           
-           if (userSnap.exists()) {
-               userData = userSnap.data();
-               
-               // Reset daily searches if it's a new day
-               const today = new Date().toDateString();
-               if (userData.lastSearchDate !== today) {
-                   userData.searchesUsed = 0;
-                   userData.lastSearchDate = today;
-                   await setDoc(userRef, {
-                       searchesUsed: 0,
-                       lastSearchDate: today,
-                       updatedAt: serverTimestamp()
-                   }, { merge: true });
-               }
-           }
-       } catch (error) {
-           console.error("Error loading user data:", error);
-       }
-   }
+  async function loadUserData() {
+    try {
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+            userData = userSnap.data();
+
+            // ✅  प्लान expiry चेक करो
+            const now = new Date();
+            if (userData.planExpiry && new Date(userData.planExpiry.seconds * 1000) < now) {
+                userData.currentPlan = "free";
+                userData.planExpiry = null;
+
+                await setDoc(userRef, {
+                    currentPlan: "free",
+                    planExpiry: null,
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+            }
+
+            // ✅ अगर नया दिन है तो searches reset करो
+            const today = new Date().toDateString();
+            if (userData.lastSearchDate !== today) {
+                userData.searchesUsed = 0;
+                userData.lastSearchDate = today;
+                await setDoc(userRef, {
+                    searchesUsed: 0,
+                    lastSearchDate: today,
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+            }
+        }
+    } catch (error) {
+        console.error("Error loading user data:", error);
+    }
+}
 
    // Update UI with user data
    function updateUI() {
