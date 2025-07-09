@@ -1033,8 +1033,14 @@ function removeInterest(interestId) {
     const interest = selectedInterests.find(item => item.id === interestId);
     selectedInterests = selectedInterests.filter(item => item.id !== interestId);
 
-    const checkbox = document.querySelector(`input[data-interest*='"id":"${interestId}"']`);
-    if (checkbox) checkbox.checked = false;
+    // checkbox uncheck (based on id inside data-interest)
+    const checkboxes = document.querySelectorAll('.checkbox');
+    checkboxes.forEach(checkbox => {
+        const data = JSON.parse(checkbox.dataset.interest);
+        if (data.id === interestId) {
+            checkbox.checked = false;
+        }
+    });
 
     updateSelectedList();
     showToast(`${interest?.name || 'Interest'} removed`);
