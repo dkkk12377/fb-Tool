@@ -953,54 +953,41 @@ z-index: 100;
         }
 
         // Display search results
-     function displayResults() {
-    resultsCount.textContent = `Search Results: ${allInterests.length}`;
+        function displayResults() {
+            resultsCount.textContent = `Search Results: ${allInterests.length}`;
+            
+            if (allInterests.length === 0) {
+                resultsBody.innerHTML = '<div class="empty-state"><h3>No results found</h3><p>Try different keywords</p></div>';
+                return;
+            }
 
-    if (!Array.isArray(allInterests) || allInterests.length === 0) {
-        resultsBody.innerHTML = '<div class="empty-state"><h3>No results found</h3><p>Try different keywords</p></div>';
-        return;
-    }
-
-    resultsBody.innerHTML = allInterests.map((interest, index) => {
-        const isChecked = selectedInterests.some(item => item.id === interest.id);
-        return `
-            <div class="table-row">
-                <div>
-                    <input type="checkbox" class="checkbox" data-interest='${JSON.stringify(interest)}' onchange="toggleInterest(this)" ${isChecked ? "checked" : ""}>
+            resultsBody.innerHTML = allInterests.map((interest, index) => `
+                <div class="table-row">
+                    <div>
+                        <input type="checkbox" class="checkbox" data-interest='${JSON.stringify(interest)}' onchange="toggleInterest(this)">
+                    </div>
+                    <div>${index + 1}</div>
+                    <div class="interest-name">${interest.name}</div>
                 </div>
-                <div>${index + 1}</div>
-                <div class="interest-name">${interest.name}</div>
-            </div>
-        `;
-    }).join('');
-}
+            `).join('');
+        }
 
+        // Toggle interest selection
         // ✅ toggleInterest function
 function toggleInterest(checkbox) {
-    const interestData = checkbox.dataset.interest;
-    if (!interestData) return;
+    const interest = JSON.parse(checkbox.dataset.interest);
 
-    let interest;
-    try {
-        interest = JSON.parse(interestData);
-    } catch (e) {
-        console.error("Invalid data-interest:", interestData);
-        return;
-    }
-
-    const existingIndex = selectedInterests.findIndex(item => item.id === interest.id);
-    
     if (checkbox.checked) {
-        if (existingIndex === -1) {
+        const alreadyExists = selectedInterests.some(item => item.id === interest.id);
+        if (!alreadyExists) {
             selectedInterests.push(interest);
         }
     } else {
-        if (existingIndex !== -1) {
-            selectedInterests.splice(existingIndex, 1);
-        }
+        selectedInterests = selectedInterests.filter(item => item.id !== interest.id);
     }
 
     updateSelectedList();
+    showToast(`${interest.name} ${checkbox.checked ? 'selected' : 'removed'}`);
 }
 
 // ✅ selectAll function
@@ -1044,21 +1031,14 @@ function updateSelectedList() {
 
 // ✅ removeInterest function
 function removeInterest(interestId) {
+    const interest = selectedInterests.find(item => item.id === interestId);
     selectedInterests = selectedInterests.filter(item => item.id !== interestId);
 
-    const checkboxes = document.querySelectorAll('.checkbox');
-    checkboxes.forEach(checkbox => {
-        try {
-            const val = JSON.parse(checkbox.dataset.interest);
-            if (val.id === interestId) {
-                checkbox.checked = false;
-            }
-        } catch (e) {
-            console.error('Error parsing checkbox interest:', e);
-        }
-    });
+    const checkbox = document.querySelector(`input[data-interest*='"id":"${interestId}"']`);
+    if (checkbox) checkbox.checked = false;
 
     updateSelectedList();
+    showToast(`${interest?.name || 'Interest'} removed`);
 }
 
 // ✅ clearSelection function
