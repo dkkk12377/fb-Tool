@@ -953,10 +953,10 @@ z-index: 100;
         }
 
         // Display search results
-      function displayResults() {
+     function displayResults() {
     resultsCount.textContent = `Search Results: ${allInterests.length}`;
 
-    if (allInterests.length === 0) {
+    if (!Array.isArray(allInterests) || allInterests.length === 0) {
         resultsBody.innerHTML = '<div class="empty-state"><h3>No results found</h3><p>Try different keywords</p></div>';
         return;
     }
@@ -977,22 +977,27 @@ z-index: 100;
 
         // ✅ toggleInterest function
 function toggleInterest(checkbox) {
-    if (!checkbox || !checkbox.dataset.interest) return;
+    const interestData = checkbox.dataset.interest;
+    if (!interestData) return;
 
     let interest;
     try {
-        interest = JSON.parse(checkbox.dataset.interest);
+        interest = JSON.parse(interestData);
     } catch (e) {
-        console.error("Invalid data-interest:", checkbox.dataset.interest);
+        console.error("Invalid data-interest:", interestData);
         return;
     }
 
+    const existingIndex = selectedInterests.findIndex(item => item.id === interest.id);
+    
     if (checkbox.checked) {
-        if (!selectedInterests.some(item => item.id === interest.id)) {
+        if (existingIndex === -1) {
             selectedInterests.push(interest);
         }
     } else {
-        selectedInterests = selectedInterests.filter(item => item.id !== interest.id);
+        if (existingIndex !== -1) {
+            selectedInterests.splice(existingIndex, 1);
+        }
     }
 
     updateSelectedList();
@@ -1041,18 +1046,20 @@ function updateSelectedList() {
 function removeInterest(interestId) {
     selectedInterests = selectedInterests.filter(item => item.id !== interestId);
 
-    // Find checkbox and uncheck it
-    document.querySelectorAll('.checkbox').forEach(cb => {
+    const checkboxes = document.querySelectorAll('.checkbox');
+    checkboxes.forEach(checkbox => {
         try {
-            const val = JSON.parse(cb.dataset.interest);
-            if (val.id === interestId) cb.checked = false;
-        } catch {}
+            const val = JSON.parse(checkbox.dataset.interest);
+            if (val.id === interestId) {
+                checkbox.checked = false;
+            }
+        } catch (e) {
+            console.error('Error parsing checkbox interest:', e);
+        }
     });
 
     updateSelectedList();
 }
-
-
 
 // ✅ clearSelection function
 function clearSelection() {
