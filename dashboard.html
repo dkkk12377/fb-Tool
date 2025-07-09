@@ -47,10 +47,13 @@
         }
 
         .header-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    position: relative;
+    overflow: visible;
+    z-index: 5;
+}
 
         .plan-info {
             display: flex;
@@ -96,8 +99,10 @@
         }
 
         .profile-section {
-            position: relative;
-        }
+    position: relative;
+    overflow: visible;
+    z-index: 10;
+}
 
         .profile-btn {
             background: rgba(255, 255, 255, 0.1);
@@ -143,20 +148,22 @@
             background: rgba(255, 255, 255, 0.2);
         }
 
-        .dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background: rgba(0, 0, 0, 0.9);
-            border-radius: 10px;
-            padding: 10px 0;
-            min-width: 200px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 1000;
-            display: none;
-        }
+        .dropdown, .profile-dropdown {
+    position: absolute;
+    top: 110%;
+    right: 0;
+    background: rgba(0, 0, 0, 0.9);
+    border-radius: 10px;
+    padding: 10px 0;
+    min-width: 200px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 999;
+    max-height: 400px;
+    overflow-y: auto;
+    display: none;
+}
 
         .dropdown.show {
             display: block;
