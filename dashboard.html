@@ -978,14 +978,17 @@ function toggleInterest(checkbox) {
     const interest = JSON.parse(checkbox.dataset.interest);
 
     if (checkbox.checked) {
+        // Add only if not already present
         const alreadyExists = selectedInterests.some(item => item.id === interest.id);
         if (!alreadyExists) {
             selectedInterests.push(interest);
         }
     } else {
+        // Remove from selected
         selectedInterests = selectedInterests.filter(item => item.id !== interest.id);
     }
 
+    // Update right side UI
     updateSelectedList();
 }
 
