@@ -977,20 +977,24 @@ z-index: 100;
 
         // ✅ toggleInterest function
 function toggleInterest(checkbox) {
-    const interest = JSON.parse(checkbox.dataset.interest);
+    if (!checkbox || !checkbox.dataset.interest) return;
+
+    let interest;
+    try {
+        interest = JSON.parse(checkbox.dataset.interest);
+    } catch (e) {
+        console.error("Invalid data-interest:", checkbox.dataset.interest);
+        return;
+    }
 
     if (checkbox.checked) {
-        // Add only if not already present
-        const alreadyExists = selectedInterests.some(item => item.id === interest.id);
-        if (!alreadyExists) {
+        if (!selectedInterests.some(item => item.id === interest.id)) {
             selectedInterests.push(interest);
         }
     } else {
-        // Remove from selected
         selectedInterests = selectedInterests.filter(item => item.id !== interest.id);
     }
 
-    // Update right side UI
     updateSelectedList();
 }
 
@@ -1037,21 +1041,17 @@ function updateSelectedList() {
 function removeInterest(interestId) {
     selectedInterests = selectedInterests.filter(item => item.id !== interestId);
 
-    // Uncheck matching checkbox
-    const checkboxes = document.querySelectorAll('.checkbox');
-    checkboxes.forEach(checkbox => {
+    // Find checkbox and uncheck it
+    document.querySelectorAll('.checkbox').forEach(cb => {
         try {
-            const data = JSON.parse(checkbox.dataset.interest);
-            if (data.id === interestId) {
-                checkbox.checked = false;
-            }
-        } catch (e) {
-            console.error('Invalid checkbox data-interest:', e);
-        }
+            const val = JSON.parse(cb.dataset.interest);
+            if (val.id === interestId) cb.checked = false;
+        } catch {}
     });
 
-    updateSelectedList(); // ✅ important line
+    updateSelectedList();
 }
+
 
 
 // ✅ clearSelection function
