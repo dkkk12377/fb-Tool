@@ -149,7 +149,7 @@
 
        .dropdown, .profile-dropdown {
     position: absolute;
-    bottom: 110%;
+    top: 110%;
     right: 0;
     background: rgba(0, 0, 0, 0.9);
     border-radius: 10px;
@@ -352,15 +352,16 @@
             font-weight: 500;
             color: #ffffff;
         }
-
-        .selected-section {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            padding: 25px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            height: fit-content;
-        }
+.selected-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 25px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    height: fit-content;
+    z-index: 1;
+    position: relative;
+}
 
         .selected-header {
             display: flex;
