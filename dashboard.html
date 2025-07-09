@@ -907,7 +907,7 @@ z-index: 100;
             if (isLoading) return;
             
             const query = searchInput.value.trim();
-            if (!keyword) {
+            if (!query) {
                 showToast('Please enter a search term', 'error');
                 return;
             }
@@ -953,7 +953,7 @@ z-index: 100;
         }
 
         // Display search results
-        function displayResults(interests, keyword) {
+        function displayResults(interests, query) {
             allInterests = interests;
             resultsCount.textContent = `Search Results: ${interests.length}`;
             
@@ -961,7 +961,7 @@ z-index: 100;
                 resultsBody.innerHTML = `
                     <div class="empty-state">
                         <h3>😔 No Results Found</h3>
-                        <p>No interests found for "${keyword}". Try a different keyword.</p>
+                        <p>No interests found for "${query}". Try a different keyword.</p>
                     </div>
                 `;
                 return;
