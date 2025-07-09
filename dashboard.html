@@ -830,7 +830,7 @@ z-index: 100;
        const plan = userData.currentPlan || 'free';
        if (plan === 'monthly') return true;
        
-       const maxSearches = 3;
+       const maxSearches = -1;
        const used = userData.searchesUsed || 0;
        return used < maxSearches;
    }
