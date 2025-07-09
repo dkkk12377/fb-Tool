@@ -1105,15 +1105,17 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
         // Logout function
+        // Make functions globally accessible
+        window.toggleInterest = toggleInterest;
+        window.removeInterest = removeInterest;
+        window.clearSelection = clearSelection;
+        window.clearSelected = clearSelected;
+        window.copySelected = copySelected;
+        window.downloadSelected = downloadSelected;
+        window.selectAll = selectAll;
+
+        // Logout function
         window.logout = async function() {
-            try {
-                await signOut(auth);
-                window.location.href = 'index.html';
-            } catch (error) {
-                console.error('Logout error:', error);
-                showToast('Logout failed', 'error');
-            }
-        };
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
