@@ -20,31 +20,72 @@
     </button>
   </div>
 
-  <script>
-    // Replace with your Firebase config
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      appId: "YOUR_APP_ID"
-    };
+  <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const provider = new firebase.auth.GoogleAuthProvider();
+  const firebaseConfig = {
+    apiKey: "AIzaSyB-wOqU0JnvWM3Nt91xhac2x_qO5a54GMQ",
+    authDomain: "dinesh-3b413.firebaseapp.com",
+    projectId: "dinesh-3b413",
+    storageBucket: "dinesh-3b413.appspot.com",
+    messagingSenderId: "1053189064237",
+    appId: "1:1053189064237:web:d261dbebb5e7299e829aa4",
+    measurementId: "G-FPVH4NC1ML"
+  };
 
-    function googleLogin() {
-      auth.signInWithPopup(provider)
-        .then((result) => {
-          const user = result.user;
-          alert("Welcome, " + user.displayName);
-          // Redirect or show user info
-        })
-        .catch((error) => {
-          alert("Error: " + error.message);
-        });
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth();
+  const db = getFirestore();
+  const provider = new GoogleAuthProvider();
+
+  // 🚀 Redirect instantly if already logged in
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      window.location.replace("dashboard.html");
     }
-  </script>
+  });
+
+  // 🔐 Google Sign-In handler
+  window.handleGoogleAuth = async function () {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          uid: user.uid,
+          email: user.email,
+          name: user.displayName,
+          photoURL: user.photoURL,
+          currentPlan: "free",
+          planExpiry: null,
+          searchesUsed: 0,
+          lastSearchDate: null,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      } else {
+        await setDoc(userRef, {
+          updatedAt: serverTimestamp(),
+        }, { merge: true });
+      }
+
+      window.location.href = "dashboard.html";
+    } catch (error) {
+      console.error("Login Error:", error);
+      alert("Login failed. Please try again.");
+    }
+  };
+
+  // 🧭 Navigation helpers
+  window.showHelp = () => window.location.href = "help.html";
+  window.showTerms = () => window.location.href = "term.html";
+  window.showPrivacy = () => window.location.href = "privacypolicy.html";
+</script>
 </body>
 </html>
