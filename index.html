@@ -321,7 +321,7 @@
   const provider = new GoogleAuthProvider();
 
   // 🚀 Redirect instantly if already logged in
-  onAuthStateChanged(auth, async (user) => {
+ onAuthStateChanged(auth, async (user) => {
   if (user) {
     const userRef = doc(db, "users", user.uid);
     const userSnap = await getDoc(userRef);
@@ -337,7 +337,7 @@
         searchesUsed: 0,
         lastSearchDate: null,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       });
     } else {
       await setDoc(userRef, {
