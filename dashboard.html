@@ -685,6 +685,7 @@ z-index: 100;
     <!-- Firebase SDK -->
     <script type="module">
    // Firebase SDK
+// Firebase SDK
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -933,9 +934,9 @@ function displayResults() {
     }
 
     resultsBody.innerHTML = allInterests.map((interest, index) => `
-        <div class="table-row">
+        <div class="table-row" data-interest='${JSON.stringify(interest)}' onclick="toggleInterestRow(this)" style="cursor: pointer;">
             <div>
-                <input type="checkbox" class="checkbox" data-interest='${JSON.stringify(interest)}' onchange="toggleInterest(this)">
+                <input type="checkbox" class="checkbox" onclick="event.stopPropagation();" onchange="toggleInterest(this, ${JSON.stringify(interest).replace(/"/g, '&quot;')})">
             </div>
             <div>${index + 1}</div>
             <div class="interest-name">${interest.name}</div>
@@ -943,11 +944,26 @@ function displayResults() {
     `).join('');
 }
 
-// Toggle interest selection
-function toggleInterest(checkbox) {
+// Toggle interest when row is clicked
+function toggleInterestRow(row) {
     try {
-        const interest = JSON.parse(checkbox.dataset.interest);
+        const interest = JSON.parse(row.dataset.interest);
+        const checkbox = row.querySelector('.checkbox');
+        
+        // Toggle checkbox state
+        checkbox.checked = !checkbox.checked;
+        
+        // Call the toggle function
+        toggleInterest(checkbox, interest);
+    } catch (error) {
+        console.error('Toggle interest row error:', error);
+        showToast('Error selecting interest', 'error');
+    }
+}
 
+// Toggle interest selection
+function toggleInterest(checkbox, interest) {
+    try {
         if (checkbox.checked) {
             const alreadyExists = selectedInterests.some(item => item.id === interest.id);
             if (!alreadyExists) {
@@ -1146,6 +1162,7 @@ profileBtn.addEventListener('click', (e) => {
 
 // Make functions globally accessible
 window.toggleInterest = toggleInterest;
+window.toggleInterestRow = toggleInterestRow;
 window.removeInterest = removeInterest;
 window.clearSelection = clearSelection;
 window.clearSelected = clearSelected;
