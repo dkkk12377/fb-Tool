@@ -170,20 +170,20 @@ z-index: 100;
         }
 
         .dropdown-item {
-            padding: 12px 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: white;
-            text-decoration: none;
-        }
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    text-decoration: none;
+}
 
-        .dropdown-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
+.dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+}
         .dropdown-item.active {
             background: rgba(255, 107, 107, 0.2);
             color: #ff6b6b;
@@ -924,6 +924,7 @@ async function searchInterests() {
 }
 
 // Display search results
+/ Display search results - Fixed cursor issue
 function displayResults() {
     resultsCount.textContent = `Search Results: ${allInterests.length}`;
     
@@ -933,15 +934,41 @@ function displayResults() {
     }
 
     resultsBody.innerHTML = allInterests.map((interest, index) => `
-        <div class="table-row" data-index="${index}" onclick="toggleInterestRow(${index})" style="cursor: pointer;">
+        <div class="table-row" data-index="${index}">
             <div>
-                <input type="checkbox" class="checkbox" onclick="event.stopPropagation();" onchange="toggleInterestFromCheckbox(${index}, this.checked)">
+                <input type="checkbox" class="checkbox" id="checkbox-${index}" onchange="toggleInterestFromCheckbox(${index}, this.checked)">
             </div>
-            <div>${index + 1}</div>
-            <div class="interest-name">${escapeHtml(interest.name)}</div>
+            <div onclick="toggleRowClick(${index})" style="cursor: pointer;">${index + 1}</div>
+            <div class="interest-name" onclick="toggleRowClick(${index})" style="cursor: pointer;">${escapeHtml(interest.name)}</div>
         </div>
     `).join('');
 }
+
+function toggleRowClick(index) {
+    try {
+        if (index < 0 || index >= allInterests.length) {
+            console.error('Invalid index:', index);
+            return;
+        }
+
+        const checkbox = document.getElementById(`checkbox-${index}`);
+        if (!checkbox) {
+            console.error('Checkbox not found for index:', index);
+            return;
+        }
+        
+        // Toggle checkbox state
+        checkbox.checked = !checkbox.checked;
+        
+        // Update selection
+        toggleInterestFromCheckbox(index, checkbox.checked);
+        
+    } catch (error) {
+        console.error('Toggle row click error:', error);
+        showToast('Error selecting interest', 'error');
+    }
+}
+
 
 // Utility function to escape HTML
 function escapeHtml(text) {
