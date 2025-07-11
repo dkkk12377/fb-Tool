@@ -806,20 +806,22 @@ z-index: 100;
        planBadge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
        
        if (plan === 'free') {
-    const maxSearches = 3;
-    const used = userData.searchesUsed || 0;
-    const remaining = Math.max(0, maxSearches - used);
-    searchesLeft.textContent = `${remaining}/${maxSearches} searches`;
-    
-    // ✅ Show the upgrade button always for free plan
-    upgradeBtn.style.display = 'flex';
-
-    if (remaining === 0) {
-        searchesLeft.style.color = '#e74c3c';
-    } else {
-        searchesLeft.style.color = '#2ecc71';
-    }
-}
+           const maxSearches = 3;
+           const used = userData.searchesUsed || 0;
+           const remaining = Math.max(0, maxSearches - used);
+           searchesLeft.textContent = `${remaining}/${maxSearches} searches`;
+           upgradeBtn.style.display = remaining === 0 ? 'flex' : 'none';
+           
+           if (remaining === 0) {
+               searchesLeft.style.color = '#e74c3c';
+           } else {
+               searchesLeft.style.color = '#2ecc71';
+           }
+       } else {
+           searchesLeft.textContent = 'Unlimited searches';
+           upgradeBtn.style.display = 'none';
+       }
+   }
 
    // Check if user can perform search
    function canPerformSearch() {
