@@ -1026,8 +1026,17 @@ function removeInterest(interestId) {
         const interest = selectedInterests.find(item => item.id === interestId);
         selectedInterests = selectedInterests.filter(item => item.id !== interestId);
 
-        const checkbox = document.querySelector(`input[data-interest*='"id":"${interestId}"']`);
-        if (checkbox) checkbox.checked = false;
+        // Left side के checkbox को uncheck करने के लिए सही selector
+        const checkboxes = document.querySelectorAll('.checkbox');
+        checkboxes.forEach(checkbox => {
+            const row = checkbox.closest('.table-row');
+            if (row) {
+                const rowInterest = JSON.parse(row.dataset.interest);
+                if (rowInterest.id === interestId) {
+                    checkbox.checked = false;
+                }
+            }
+        });
 
         updateSelectedList();
         showToast(`${interest?.name || 'Interest'} removed`);
