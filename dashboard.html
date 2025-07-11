@@ -170,20 +170,20 @@ z-index: 100;
         }
 
         .dropdown-item {
-    padding: 12px 20px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: white;
-    text-decoration: none;
-}
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            text-decoration: none;
+        }
 
-.dropdown-item:hover {
-    background: rgba(255, 255, 255, 0.1);
-    cursor: pointer;
-}
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
         .dropdown-item.active {
             background: rgba(255, 107, 107, 0.2);
             color: #ff6b6b;
@@ -685,6 +685,7 @@ z-index: 100;
     <!-- Firebase SDK -->
     <script type="module">
    // Firebase SDK
+// Firebase SDK
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -924,7 +925,6 @@ async function searchInterests() {
 }
 
 // Display search results
-/ Display search results - Fixed cursor issue
 function displayResults() {
     resultsCount.textContent = `Search Results: ${allInterests.length}`;
     
@@ -934,93 +934,37 @@ function displayResults() {
     }
 
     resultsBody.innerHTML = allInterests.map((interest, index) => `
-        <div class="table-row" data-index="${index}">
+        <div class="table-row" data-interest='${JSON.stringify(interest)}' onclick="toggleInterestRow(this)" style="cursor: pointer;">
             <div>
-                <input type="checkbox" class="checkbox" id="checkbox-${index}" onchange="toggleInterestFromCheckbox(${index}, this.checked)">
+                <input type="checkbox" class="checkbox" onclick="event.stopPropagation();" onchange="toggleInterest(this, ${JSON.stringify(interest).replace(/"/g, '&quot;')})">
             </div>
-            <div onclick="toggleRowClick(${index})" style="cursor: pointer;">${index + 1}</div>
-            <div class="interest-name" onclick="toggleRowClick(${index})" style="cursor: pointer;">${escapeHtml(interest.name)}</div>
+            <div>${index + 1}</div>
+            <div class="interest-name">${interest.name}</div>
         </div>
     `).join('');
 }
 
-function toggleRowClick(index) {
-    try {
-        if (index < 0 || index >= allInterests.length) {
-            console.error('Invalid index:', index);
-            return;
-        }
-
-        const checkbox = document.getElementById(`checkbox-${index}`);
-        if (!checkbox) {
-            console.error('Checkbox not found for index:', index);
-            return;
-        }
-        
-        // Toggle checkbox state
-        checkbox.checked = !checkbox.checked;
-        
-        // Update selection
-        toggleInterestFromCheckbox(index, checkbox.checked);
-        
-    } catch (error) {
-        console.error('Toggle row click error:', error);
-        showToast('Error selecting interest', 'error');
-    }
-}
-
-
-// Utility function to escape HTML
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
 // Toggle interest when row is clicked
-function toggleInterestRow(index) {
+function toggleInterestRow(row) {
     try {
-        if (index < 0 || index >= allInterests.length) {
-            console.error('Invalid index:', index);
-            return;
-        }
-
-        const interest = allInterests[index];
-        const row = document.querySelector(`[data-index="${index}"]`);
-        if (!row) {
-            console.error('Row not found for index:', index);
-            return;
-        }
-
+        const interest = JSON.parse(row.dataset.interest);
         const checkbox = row.querySelector('.checkbox');
-        if (!checkbox) {
-            console.error('Checkbox not found for index:', index);
-            return;
-        }
         
         // Toggle checkbox state
         checkbox.checked = !checkbox.checked;
         
-        // Update selection
-        toggleInterestFromCheckbox(index, checkbox.checked);
-        
+        // Call the toggle function
+        toggleInterest(checkbox, interest);
     } catch (error) {
         console.error('Toggle interest row error:', error);
         showToast('Error selecting interest', 'error');
     }
 }
 
-// Toggle interest from checkbox
-function toggleInterestFromCheckbox(index, isChecked) {
+// Toggle interest selection
+function toggleInterest(checkbox, interest) {
     try {
-        if (index < 0 || index >= allInterests.length) {
-            console.error('Invalid index:', index);
-            return;
-        }
-
-        const interest = allInterests[index];
-        
-        if (isChecked) {
+        if (checkbox.checked) {
             const alreadyExists = selectedInterests.some(item => item.id === interest.id);
             if (!alreadyExists) {
                 selectedInterests.push(interest);
@@ -1030,9 +974,9 @@ function toggleInterestFromCheckbox(index, isChecked) {
         }
 
         updateSelectedList();
-        showToast(`${interest.name} ${isChecked ? 'selected' : 'removed'}`);
+        showToast(`${interest.name} ${checkbox.checked ? 'selected' : 'removed'}`);
     } catch (error) {
-        console.error('Toggle interest from checkbox error:', error);
+        console.error('Toggle interest error:', error);
         showToast('Error selecting interest', 'error');
     }
 }
@@ -1070,7 +1014,7 @@ function updateSelectedList() {
 
     selectedList.innerHTML = selectedInterests.map(interest => `
         <div class="selected-item">
-            <span>${escapeHtml(interest.name)}</span>
+            <span>${interest.name}</span>
             <button class="remove-btn" onclick="removeInterest('${interest.id}')">×</button>
         </div>
     `).join('');
@@ -1083,16 +1027,20 @@ function removeInterest(interestId) {
         selectedInterests = selectedInterests.filter(item => item.id !== interestId);
 
         // Left side के checkbox को uncheck करने के लिए
-        const interestIndex = allInterests.findIndex(item => item.id === interestId);
-        if (interestIndex !== -1) {
-            const row = document.querySelector(`[data-index="${interestIndex}"]`);
-            if (row) {
-                const checkbox = row.querySelector('.checkbox');
-                if (checkbox) {
-                    checkbox.checked = false;
+        const checkboxes = document.querySelectorAll('.checkbox');
+        checkboxes.forEach(checkbox => {
+            const row = checkbox.closest('.table-row');
+            if (row && row.dataset.interest) {
+                try {
+                    const rowInterest = JSON.parse(row.dataset.interest);
+                    if (rowInterest.id === interestId) {
+                        checkbox.checked = false;
+                    }
+                } catch (e) {
+                    // JSON parse error ignore करें
                 }
             }
-        }
+        });
 
         updateSelectedList();
         showToast(`${interest?.name || 'Interest'} removed`);
@@ -1226,8 +1174,8 @@ profileBtn.addEventListener('click', (e) => {
 });
 
 // Make functions globally accessible
+window.toggleInterest = toggleInterest;
 window.toggleInterestRow = toggleInterestRow;
-window.toggleInterestFromCheckbox = toggleInterestFromCheckbox;
 window.removeInterest = removeInterest;
 window.clearSelection = clearSelection;
 window.clearSelected = clearSelected;
