@@ -784,56 +784,45 @@ z-index: 100;
 }
 
    // Update UI with user data
-   function updateUI() {
-       if (!currentUser || !userData) return;
+  // Update UI with user data
+function updateUI() {
+    if (!currentUser || !userData) return;
 
-       // Update user name
-       userName.textContent = currentUser.displayName || 'User';
+    // Update user name
+    userName.textContent = currentUser.displayName || 'User';
 
-       // Update profile image
-       if (currentUser.photoURL) {
-           profileImage.src = currentUser.photoURL;
-           profileImage.style.display = 'block';
-           profileInitial.style.display = 'none';
-       } else {
-           profileInitial.textContent = currentUser.displayName ? currentUser.displayName.charAt(0).toUpperCase() : 'U';
-           profileInitial.style.display = 'block';
-           profileImage.style.display = 'none';
-       }
-
-       // Update plan info
-      // Update plan info
-const plan = userData.currentPlan || 'free';
-planBadge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
-
-if (plan === 'free') {
-    const maxSearches = 3;
-    const used = userData.searchesUsed || 0;
-    const remaining = Math.max(0, maxSearches - used);
-    searchesLeft.textContent = `${remaining}/${maxSearches} searches`;
-    upgradeBtn.style.display = 'flex'; // हमेशा show करो free plan में
-    
-    if (remaining === 0) {
-        searchesLeft.style.color = '#e74c3c';
+    // Update profile image
+    if (currentUser.photoURL) {
+        profileImage.src = currentUser.photoURL;
+        profileImage.style.display = 'block';
+        profileInitial.style.display = 'none';
     } else {
-        searchesLeft.style.color = '#2ecc71';
+        profileInitial.textContent = currentUser.displayName ? currentUser.displayName.charAt(0).toUpperCase() : 'U';
+        profileInitial.style.display = 'block';
+        profileImage.style.display = 'none';
     }
-} else {
-    searchesLeft.textContent = 'Unlimited searches';
-    upgradeBtn.style.display = 'none';
-}
 
-   // Check if user can perform search
-   function canPerformSearch() {
-       if (!userData) return false;
-       
-       const plan = userData.currentPlan || 'free';
-       if (plan === 'monthly') return true;
-       
-       const maxSearches = 3;
-       const used = userData.searchesUsed || 0;
-       return used < maxSearches;
-   }
+    // Update plan info
+    const plan = userData.currentPlan || 'free';
+    planBadge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
+
+    if (plan === 'free') {
+        const maxSearches = 3;
+        const used = userData.searchesUsed || 0;
+        const remaining = Math.max(0, maxSearches - used);
+        searchesLeft.textContent = `${remaining}/${maxSearches} searches`;
+        upgradeBtn.style.display = 'flex'; // हमेशा show करो free plan में
+        
+        if (remaining === 0) {
+            searchesLeft.style.color = '#e74c3c';
+        } else {
+            searchesLeft.style.color = '#2ecc71';
+        }
+    } else {
+        searchesLeft.textContent = 'Unlimited searches';
+        upgradeBtn.style.display = 'none';
+    }
+}
 
    // Update search count
    async function updateSearchCount() {
