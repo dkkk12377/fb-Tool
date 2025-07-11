@@ -285,9 +285,14 @@
         
         <div class="auth-buttons">
             <button class="google-btn" onclick="handleGoogleAuth()">
-                <div class="google-icon"></div>
-                Continue with Google
-            </button>
+  <div class="google-icon"></div>
+  Continue with Google
+</button>
+
+<!-- ✨ ADD THIS BELOW GOOGLE BUTTON -->
+<button id="redirect-btn" style="display: none; background: #28a745; color: white; border: none; border-radius: 50px; padding: 15px 30px; font-size: 16px; font-weight: 500; cursor: not-allowed;">
+  Redirecting...
+</button>
             
             <button class="help-btn" onclick="showHelp()">
                 Need Help?
@@ -323,8 +328,14 @@
   // 🚀 Redirect instantly if already logged in
  onAuthStateChanged(auth, async (user) => {
   const loginUI = document.querySelector(".login-container");
+  const googleBtn = document.querySelector(".google-btn");
+  const redirectBtn = document.getElementById("redirect-btn");
 
   if (user) {
+    // Show redirect button, hide Google sign-in
+    googleBtn.style.display = "none";
+    redirectBtn.style.display = "block";
+
     const userRef = doc(db, "users", user.uid);
     const userSnap = await getDoc(userRef);
 
@@ -347,11 +358,13 @@
       }, { merge: true });
     }
 
-    // ✅ Direct redirect if already logged in
+    // ✅ Redirect user
     window.location.replace("dashboard.html");
   } else {
-    // ✅ Show login UI if not logged in
+    // User not logged in – show Google sign-in
     loginUI.style.display = "block";
+    googleBtn.style.display = "flex";
+    redirectBtn.style.display = "none";
   }
 });
 
