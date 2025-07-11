@@ -1026,14 +1026,18 @@ function removeInterest(interestId) {
         const interest = selectedInterests.find(item => item.id === interestId);
         selectedInterests = selectedInterests.filter(item => item.id !== interestId);
 
-        // Left side के checkbox को uncheck करने के लिए सही selector
+        // Left side के checkbox को uncheck करने के लिए
         const checkboxes = document.querySelectorAll('.checkbox');
         checkboxes.forEach(checkbox => {
             const row = checkbox.closest('.table-row');
-            if (row) {
-                const rowInterest = JSON.parse(row.dataset.interest);
-                if (rowInterest.id === interestId) {
-                    checkbox.checked = false;
+            if (row && row.dataset.interest) {
+                try {
+                    const rowInterest = JSON.parse(row.dataset.interest);
+                    if (rowInterest.id === interestId) {
+                        checkbox.checked = false;
+                    }
+                } catch (e) {
+                    // JSON parse error ignore करें
                 }
             }
         });
