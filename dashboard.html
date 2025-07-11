@@ -803,25 +803,25 @@ function updateUI() {
     }
 
     // Update plan info
-    const plan = userData.currentPlan || 'free';
-    planBadge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
+    // Update plan info
+const plan = userData.currentPlan || 'free';
+planBadge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
 
-    if (plan === 'free') {
-        const maxSearches = 3;
-        const used = userData.searchesUsed || 0;
-        const remaining = Math.max(0, maxSearches - used);
-        searchesLeft.textContent = `${remaining}/${maxSearches} searches`;
-        upgradeBtn.style.display = 'flex'; // हमेशा show करो free plan में
-        
-        if (remaining === 0) {
-            searchesLeft.style.color = '#e74c3c';
-        } else {
-            searchesLeft.style.color = '#2ecc71';
-        }
+if (plan === 'free') {
+    const maxSearches = 3;
+    const used = userData.searchesUsed || 0;
+    const remaining = Math.max(0, maxSearches - used);
+    searchesLeft.textContent = `${remaining}/${maxSearches} searches`;
+    upgradeBtn.style.display = 'flex'; // हमेशा show करो free plan में
+    
+    if (remaining === 0) {
+        searchesLeft.style.color = '#e74c3c';
     } else {
-        searchesLeft.textContent = 'Unlimited searches';
-        upgradeBtn.style.display = 'none';
+        searchesLeft.style.color = '#2ecc71';
     }
+} else {
+    searchesLeft.textContent = 'Unlimited searches';
+    upgradeBtn.style.display = 'none';
 }
 
    // Update search count
