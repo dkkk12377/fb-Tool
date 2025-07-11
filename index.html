@@ -278,7 +278,7 @@
         <div class="shape"></div>
     </div>
 
-    <div class="login-container">
+    <div class="login-container" style="display: none;">
         <div class="logo">W</div>
         <h1>Welcome</h1>
         <p class="subtitle">Sign in or create your account to get started</p>
@@ -322,6 +322,8 @@
 
   // 🚀 Redirect instantly if already logged in
  onAuthStateChanged(auth, async (user) => {
+  const loginUI = document.querySelector(".login-container");
+
   if (user) {
     const userRef = doc(db, "users", user.uid);
     const userSnap = await getDoc(userRef);
@@ -345,7 +347,11 @@
       }, { merge: true });
     }
 
+    // ✅ Direct redirect if already logged in
     window.location.replace("dashboard.html");
+  } else {
+    // ✅ Show login UI if not logged in
+    loginUI.style.display = "block";
   }
 });
 
