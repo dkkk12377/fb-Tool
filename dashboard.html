@@ -934,9 +934,9 @@ function displayResults() {
     }
 
     resultsBody.innerHTML = allInterests.map((interest, index) => `
-        <div class="table-row" data-interest='${JSON.stringify(interest)}' onclick="toggleInterestRow(this)" style="cursor: pointer;">
+        <div class="table-row" data-interest-id="${interest.id}" data-interest-name="${interest.name.replace(/"/g, '&quot;')}" onclick="toggleInterestRow(this)" style="cursor: pointer;">
             <div>
-                <input type="checkbox" class="checkbox" onclick="event.stopPropagation();" onchange="toggleInterest(this, ${JSON.stringify(interest).replace(/"/g, '&quot;')})">
+                <input type="checkbox" class="checkbox" onclick="event.stopPropagation();" onchange="toggleInterestFromCheckbox(this, '${interest.id}')">
             </div>
             <div>${index + 1}</div>
             <div class="interest-name">${interest.name}</div>
@@ -962,21 +962,44 @@ function toggleInterestRow(row) {
 }
 
 // Toggle interest selection
-function toggleInterest(checkbox, interest) {
+function toggleInterestRow(row) {
     try {
-        if (checkbox.checked) {
-            const alreadyExists = selectedInterests.some(item => item.id === interest.id);
-            if (!alreadyExists) {
-                selectedInterests.push(interest);
-            }
-        } else {
-            selectedInterests = selectedInterests.filter(item => item.id !== interest.id);
+        const interestId = row.dataset.interestId;
+        const interestName = row.dataset.interestName;
+        
+        // Find the full interest object
+        const interest = allInterests.find(item => item.id === interestId);
+        
+        if (!interest) {
+            console.error('Interest not found:', interestId);
+            return;
         }
-
-        updateSelectedList();
-        showToast(`${interest.name} ${checkbox.checked ? 'selected' : 'removed'}`);
+        
+        const checkbox = row.querySelector('.checkbox');
+        
+        // Toggle checkbox state
+        checkbox.checked = !checkbox.checked;
+        
+        // Call the toggle function
+        toggleInterest(checkbox, interest);
     } catch (error) {
-        console.error('Toggle interest error:', error);
+        console.error('Toggle interest row error:', error);
+        showToast('Error selecting interest', 'error');
+    }
+}
+
+// New function to handle checkbox changes directly
+function toggleInterestFromCheckbox(checkbox, interestId) {
+    try {
+        const interest = allInterests.find(item => item.id === interestId);
+        if (!interest) {
+            console.error('Interest not found:', interestId);
+            return;
+        }
+        
+        toggleInterest(checkbox, interest);
+    } catch (error) {
+        console.error('Toggle interest checkbox error:', error);
         showToast('Error selecting interest', 'error');
     }
 }
@@ -1182,6 +1205,7 @@ window.clearSelected = clearSelected;
 window.copySelected = copySelected;
 window.downloadSelected = downloadSelected;
 window.selectAll = selectAll;
+window.toggleInterestFromCheckbox = toggleInterestFromCheckbox;
 
 // Logout function
 window.logout = async function() {
