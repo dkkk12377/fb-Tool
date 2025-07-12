@@ -752,7 +752,6 @@ const upgradeBtn = document.getElementById('upgradeBtn');
 const profileBtn = document.getElementById('profileBtn');
 const profileImage = document.getElementById('profileImage');
 const profileInitial = document.getElementById('profileInitial');
-const menuBtn = document.getElementById('menuBtn');
 const dropdown = document.getElementById('dropdown');
 const searchInput = document.getElementById('searchInput');
 const exploreBtn = document.getElementById('exploreBtn');
@@ -1244,18 +1243,6 @@ downloadBtn.addEventListener('click', downloadSelected);
 clearSelectedBtn.addEventListener('click', clearSelected);
 upgradeBtn.addEventListener('click', () => window.location.href = 'plans.html');
 
-// Menu toggle
-menuBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    dropdown.classList.toggle('show');
-});
-
-// Close dropdown when clicking outside
-document.addEventListener('click', (e) => {
-    if (!dropdown.contains(e.target) && !menuBtn.contains(e.target)) {
-        dropdown.classList.remove('show');
-    }
-});
 
 // Profile click handler
 // ✅ Profile button click से dropdown toggle
