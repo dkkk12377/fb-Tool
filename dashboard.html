@@ -578,15 +578,18 @@ z-index: 100;
 }
 
 #resultsBody {
-    max-height: 600px; /* पहले 400px था */
+    max-height: 600px;
     overflow-y: auto;
     overflow-x: hidden;
-    scrollbar-width: thin;
+    scrollbar-width: thin; /* Firefox */
 }
 
-/* Optional: Chrome/Edge के लिए स्क्रॉलबार को सुंदर बनाएं */
 #resultsBody::-webkit-scrollbar {
     width: 6px;
+}
+
+#resultsBody::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 #resultsBody::-webkit-scrollbar-thumb {
