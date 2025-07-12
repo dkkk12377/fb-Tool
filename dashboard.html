@@ -613,40 +613,39 @@ z-index: 100;
                  <button class="upgrade-btn" id="upgradeBtn">
                     ⬆️ Get Unlimited Searches
                 </button>
+
                 <div class="profile-section">
-                    <button class="profile-btn" id="profileBtn">
-                        <img id="profileImage" src="" alt="Profile" style="display: none;">
-                        <span id="profileInitial">?</span>
-                    </button>
-                </div>
-                    <div class="dropdown" id="dropdown">
-                        <div class="dropdown-item active">
-                            <span>🏠</span> Home
-                        </div>
-                        <div class="dropdown-item" onclick="window.location.href='plans.html'">
-                            <span>💎</span> Plans
-                        </div>
-                        <div class="dropdown-item" onclick="window.location.href='profile.html'">
-                            <span>👤</span> Profile
-                        </div>
-                        <div class="dropdown-separator"></div>
-                        <div class="dropdown-item" onclick="window.location.href='content-policy.html'">
-                            <span>📋</span> Content Policy
-                        </div>
-                        <div class="dropdown-item" onclick="window.location.href='faq.html'">
-                            <span>❓</span> FAQ
-                        </div>
-                        <div class="dropdown-item" onclick="window.location.href='about.html'">
-                            <span>ℹ️</span> About
-                        </div>
-                        <div class="dropdown-separator"></div>
-                        <div class="dropdown-item" onclick="logout()">
-                            <span>🚪</span> Logout
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <button class="profile-btn" id="profileBtn">
+    <img id="profileImage" src="" alt="Profile" style="display: none;">
+    <span id="profileInitial">?</span>
+  </button>
+  <div class="dropdown" id="dropdown">
+    <div class="dropdown-item" style="pointer-events: none;">
+      <img src="" id="dropdownProfileImage" alt="Profile" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
+      <div>
+        <div style="font-weight: 600;" id="dropdownName">User</div>
+        <div style="font-size: 12px; opacity: 0.7;" id="dropdownEmail">user@email.com</div>
+      </div>
+    </div>
+    <div class="dropdown-separator"></div>
+    <div class="dropdown-item active">
+      <span>🏠</span> Home
+    </div>
+    <div class="dropdown-item" onclick="window.location.href='plans.html'">
+      <span>💎</span> Plans
+    </div>
+    <div class="dropdown-item" onclick="window.location.href='profile.html'">
+      <span>👤</span> Profile
+    </div>
+    <div class="dropdown-separator"></div>
+    <div class="dropdown-item" onclick="logout()">
+      <span>🚪</span> Logout
+    </div>
+  </div>
+</div>
+</div>  <!-- header-right -->
+</div>  <!-- header -->
+
 
         <div class="main-content">
             <div class="search-section">
