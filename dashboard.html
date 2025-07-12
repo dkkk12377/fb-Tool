@@ -976,30 +976,6 @@ function displayResults() {
 `).join('');
 }
 
-// Add master checkbox toggle function
-function toggleMasterCheckbox() {
-    const masterCheckbox = document.getElementById('masterCheckbox');
-    const allCheckboxes = document.querySelectorAll('.checkbox');
-    
-    if (masterCheckbox.checked) {
-        // Select all
-        allCheckboxes.forEach(checkbox => {
-            checkbox.checked = true;
-        });
-        selectedInterests = [...allInterests];
-        updateSelectedList();
-        showToast(`All ${allInterests.length} interests selected`);
-    } else {
-        // Deselect all
-        allCheckboxes.forEach(checkbox => {
-            checkbox.checked = false;
-        });
-        selectedInterests = [];
-        updateSelectedList();
-        showToast('All selections cleared');
-    }
-}
-
 // Utility function to escape HTML
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -1134,30 +1110,33 @@ function removeInterest(interestId) {
 
 function toggleMasterCheckbox() {
     const masterCheckbox = document.getElementById('masterCheckbox');
-    const allCheckboxes = document.querySelectorAll('.row-checkbox');
+    const allRows = document.querySelectorAll('.table-row');
 
-    allCheckboxes.forEach(cb => {
-        cb.checked = masterCheckbox.checked;
+    selectedInterests = [];
+
+    allRows.forEach(row => {
+        const checkbox = row.querySelector('.row-checkbox');
+        const index = parseInt(row.getAttribute('data-index'));
+
+        if (!checkbox || isNaN(index)) return;
+
+        checkbox.checked = masterCheckbox.checked;
+
+        if (masterCheckbox.checked) {
+            const interest = allInterests[index];
+            if (interest && !selectedInterests.find(item => item.id === interest.id)) {
+                selectedInterests.push(interest);
+            }
+        }
     });
+
+    updateSelectedList();
+    updateMasterCheckboxState(); // sync state
+    showToast(masterCheckbox.checked
+        ? `सभी ${selectedInterests.length} इंटरेस्ट चुने गए`
+        : 'सभी चयन हटाए गए');
 }
 
-function updateMasterCheckboxState() {
-    const masterCheckbox = document.getElementById('masterCheckbox');
-    const allCheckboxes = document.querySelectorAll('.row-checkbox');
-    const total = allCheckboxes.length;
-    const checked = Array.from(allCheckboxes).filter(cb => cb.checked).length;
-
-    if (checked === total) {
-        masterCheckbox.checked = true;
-        masterCheckbox.indeterminate = false;
-    } else if (checked === 0) {
-        masterCheckbox.checked = false;
-        masterCheckbox.indeterminate = false;
-    } else {
-        masterCheckbox.checked = false;
-        masterCheckbox.indeterminate = true;
-    }
-}
 
 // Clear selection
 function clearSelection() {
