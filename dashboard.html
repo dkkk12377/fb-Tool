@@ -648,12 +648,14 @@ z-index: 100;
 
                 <div class="results-table" id="resultsTable">
                    <div class="table-header">
-                   <div></div>
-                   <div>SL</div>
-                   <div>Interest Name</div>
-                   <div>Size</div>
-                   <div>Topic</div>
-               </div>
+    <div>
+        <input type="checkbox" id="masterCheckbox" class="checkbox" onchange="toggleMasterCheckbox()">
+    </div>
+    <div>SL</div>
+    <div>Interest Name</div>
+    <div>Size</div>
+    <div>Topic</div>
+</div>
                     <div id="resultsBody">
                         <div class="empty-state">
                             <h3>🔍 Ready to Explore</h3>
@@ -972,6 +974,30 @@ function displayResults() {
         <div>${interest.topic || 'N/A'}</div>
     </div>
 `).join('');
+}
+
+// Add master checkbox toggle function
+function toggleMasterCheckbox() {
+    const masterCheckbox = document.getElementById('masterCheckbox');
+    const allCheckboxes = document.querySelectorAll('.checkbox');
+    
+    if (masterCheckbox.checked) {
+        // Select all
+        allCheckboxes.forEach(checkbox => {
+            checkbox.checked = true;
+        });
+        selectedInterests = [...allInterests];
+        updateSelectedList();
+        showToast(`All ${allInterests.length} interests selected`);
+    } else {
+        // Deselect all
+        allCheckboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        selectedInterests = [];
+        updateSelectedList();
+        showToast('All selections cleared');
+    }
 }
 
 // Utility function to escape HTML
