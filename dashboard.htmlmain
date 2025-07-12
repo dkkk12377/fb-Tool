@@ -578,7 +578,7 @@ z-index: 100;
 }
 
 #resultsBody {
-    max-height: 600px;
+    max-height: 550px;
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: thin; /* Firefox */
