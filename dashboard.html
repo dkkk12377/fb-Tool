@@ -576,6 +576,23 @@ z-index: 100;
         gap: 10px;
     }
 }
+
+#resultsBody {
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+}
+
+/* Optional: Chrome/Edge के लिए स्क्रॉलबार को सुंदर बनाएं */
+#resultsBody::-webkit-scrollbar {
+    width: 6px;
+}
+
+#resultsBody::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
     </style>
 </head>
 <body>
