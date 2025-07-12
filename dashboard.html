@@ -308,6 +308,35 @@ z-index: 100;
             background: rgba(52, 152, 219, 0.3);
         }
 
+.select-all-toggle {
+    background: rgba(52, 152, 219, 0.2);
+    color: #3498db;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.select-all-toggle:hover {
+    background: rgba(52, 152, 219, 0.3);
+}
+
+.select-all-toggle.active {
+    background: rgba(52, 152, 219, 0.4);
+    color: #ffffff;
+}
+
+.toggle-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #3498db;
+}
+
         .clear-btn {
             background: rgba(231, 76, 60, 0.2);
             color: #e74c3c;
@@ -641,10 +670,12 @@ z-index: 100;
                 <div class="results-header">
                     <div class="results-count" id="resultsCount">Search Results: 0</div>
                     <div class="header-actions">
-                        <button class="select-all-btn" id="selectAllBtn">📋 Select All</button>
-                        <button class="clear-btn" id="clearBtn">🗑️ Clear Selection</button>
-                    </div>
-                </div>
+    <button class="select-all-toggle" id="selectAllToggle">
+        <input type="checkbox" class="toggle-checkbox" id="selectAllCheckbox">
+        Select All
+    </button>
+    <button class="clear-btn" id="clearBtn">🗑️ Clear Selection</button>
+</div>
 
                 <div class="results-table" id="resultsTable">
                    <div class="table-header">
@@ -745,6 +776,8 @@ const copyBtn = document.getElementById('copyBtn');
 const downloadBtn = document.getElementById('downloadBtn');
 const clearSelectedBtn = document.getElementById('clearSelectedBtn');
 const toast = document.getElementById('toast');
+const selectAllToggle = document.getElementById('selectAllToggle');
+const selectAllCheckbox = document.getElementById('selectAllCheckbox');
 
 // Auth state observer
 onAuthStateChanged(auth, async (user) => {
@@ -1049,19 +1082,41 @@ function selectAll() {
     }
 
     const checkboxes = document.querySelectorAll('.checkbox');
+    const isSelectingAll = selectAllCheckbox.checked;
+
     checkboxes.forEach(checkbox => {
-        checkbox.checked = true;
+        checkbox.checked = isSelectingAll;
     });
 
-    selectedInterests = allInterests.map(i => ({ ...i }));
+    if (isSelectingAll) {
+        selectedInterests = allInterests.map(i => ({ ...i }));
+        selectAllToggle.classList.add('active');
+        showToast(`All ${allInterests.length} interests selected`);
+    } else {
+        selectedInterests = [];
+        selectAllToggle.classList.remove('active');
+        showToast('All selections cleared');
+    }
+
     updateSelectedList();
-    showToast(`All ${allInterests.length} interests selected`);
 }
 
 // Update selected list
 function updateSelectedList() {
     selectedCount.textContent = selectedInterests.length;
 
+    // Check if all interests are selected
+    if (allInterests && allInterests.length > 0) {
+        const allSelected = selectedInterests.length === allInterests.length;
+        selectAllCheckbox.checked = allSelected;
+        if (allSelected) {
+            selectAllToggle.classList.add('active');
+        } else {
+            selectAllToggle.classList.remove('active');
+        }
+    }
+
+    // Rest of your existing code...
     if (selectedInterests.length === 0) {
         selectedList.innerHTML = `
             <div class="empty-state">
@@ -1071,6 +1126,14 @@ function updateSelectedList() {
         `;
         return;
     }
+
+    selectedList.innerHTML = selectedInterests.map(interest => `
+        <div class="selected-item">
+            <span>${escapeHtml(interest.name)}</span>
+            <button class="remove-btn" onclick="removeInterest('${interest.id}')">×</button>
+        </div>
+    `).join('');
+}
 
     selectedList.innerHTML = selectedInterests.map(interest => `
         <div class="selected-item">
@@ -1175,7 +1238,16 @@ exploreBtn.addEventListener('click', searchInterests);
 searchInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') searchInterests();
 });
-selectAllBtn.addEventListener('click', selectAll);
+selectAllToggle.addEventListener('click', (e) => {
+    e.preventDefault();
+    selectAll();
+});
+
+selectAllCheckbox.addEventListener('change', (e) => {
+    e.stopPropagation();
+    selectAll();
+});
+
 clearBtn.addEventListener('click', clearSelection);
 copyBtn.addEventListener('click', copySelected);
 downloadBtn.addEventListener('click', downloadSelected);
