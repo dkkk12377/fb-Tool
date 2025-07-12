@@ -578,7 +578,7 @@ z-index: 100;
 }
 
 #resultsBody {
-    max-height: 400px;
+    max-height: 600px; /* पहले 400px था */
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: thin;
@@ -590,9 +590,10 @@ z-index: 100;
 }
 
 #resultsBody::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.3);
-    border-radius: 3px;
+    background: linear-gradient(to bottom, #ff6b6b, #ff8e8e);
+    border-radius: 10px;
 }
+
     </style>
 </head>
 <body>
