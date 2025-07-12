@@ -330,24 +330,24 @@ z-index: 100;
         }
 
         .table-header {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            display: grid;
-            grid-template-columns: 50px 50px 1fr;
-            gap: 15px;
-            font-weight: 600;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    display: grid;
+    grid-template-columns: 50px 50px 2fr 1fr 1fr;
+    gap: 15px;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
 
-        .table-row {
-            padding: 15px;
-            display: grid;
-            grid-template-columns: 50px 50px 1fr;
-            gap: 15px;
-            align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.3s ease;
-        }
+.table-row {
+    padding: 15px;
+    display: grid;
+    grid-template-columns: 50px 50px 2fr 1fr 1fr;
+    gap: 15px;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
 
         .table-row:hover {
             background: rgba(255, 255, 255, 0.05);
@@ -562,20 +562,20 @@ z-index: 100;
         }
 
         @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-            
-            .header {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            .table-header, .table-row {
-                grid-template-columns: 40px 40px 1fr;
-                gap: 10px;
-            }
-        }
+    .container {
+        padding: 10px;
+    }
+    
+    .header {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .table-header, .table-row {
+        grid-template-columns: 40px 40px 2fr 1fr 1fr;
+        gap: 10px;
+    }
+}
     </style>
 </head>
 <body>
@@ -647,11 +647,13 @@ z-index: 100;
                 </div>
 
                 <div class="results-table" id="resultsTable">
-                    <div class="table-header">
-                        <div></div>
-                        <div>SL</div>
-                        <div>Interest Name</div>
-                    </div>
+                   <div class="table-header">
+                   <div></div>
+                   <div>SL</div>
+                   <div>Interest Name</div>
+                   <div>Size</div>
+                   <div>Topic</div>
+               </div>
                     <div id="resultsBody">
                         <div class="empty-state">
                             <h3>🔍 Ready to Explore</h3>
@@ -943,15 +945,16 @@ function displayResults() {
     }
 
     resultsBody.innerHTML = allInterests.map((interest, index) => `
-        <div class="table-row" data-index="${index}" onclick="toggleInterestRow(${index})" style="cursor: pointer;">
-            <div>
-                <input type="checkbox" class="checkbox" onclick="event.stopPropagation();" onchange="toggleInterestFromCheckbox(${index}, this.checked)">
-            </div>
-            <div>${index + 1}</div>
-            <div class="interest-name">${escapeHtml(interest.name)}</div>
+    <div class="table-row" data-index="${index}" onclick="toggleInterestRow(${index})" style="cursor: pointer;">
+        <div>
+            <input type="checkbox" class="checkbox" onclick="event.stopPropagation();" onchange="toggleInterestFromCheckbox(${index}, this.checked)">
         </div>
-    `).join('');
-}
+        <div>${index + 1}</div>
+        <div class="interest-name">${escapeHtml(interest.name)}</div>
+        <div>${interest.audience_size_lower_bound || 0} - ${interest.audience_size_upper_bound || 0}</div>
+        <div>${interest.topic || 'N/A'}</div>
+    </div>
+`).join('');
 
 // Utility function to escape HTML
 function escapeHtml(text) {
