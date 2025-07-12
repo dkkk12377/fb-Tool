@@ -771,11 +771,17 @@ masterCheckbox.addEventListener('change', () => {
 
     document.querySelectorAll('.table-row .checkbox').forEach((cb, index) => {
         cb.checked = isChecked;
-
-        // Call the toggle logic for each interest
         toggleInterestFromCheckbox(index, isChecked);
     });
+
+    // ✅ Add toast message
+    if (isChecked) {
+        showToast(`All ${allInterests.length} interests selected`);
+    } else {
+        showToast(`Selection cleared`);
+    }
 });
+
 
 const clearBtn = document.getElementById('clearBtn');
 const copyBtn = document.getElementById('copyBtn');
