@@ -649,7 +649,7 @@ z-index: 100;
                 <div class="results-table" id="resultsTable">
                    <div class="table-header">
     <div>
-        <input type="checkbox" id="masterCheckbox" class="checkbox" onchange="toggleMasterCheckbox()">
+        <input type="checkbox" id="masterCheckbox" onchange="toggleMasterCheckbox()">
     </div>
     <div>SL</div>
     <div>Interest Name</div>
@@ -966,7 +966,7 @@ function displayResults() {
     resultsBody.innerHTML = allInterests.map((interest, index) => `
     <div class="table-row" data-index="${index}" onclick="toggleInterestRow(${index})" style="cursor: pointer;">
         <div>
-            <input type="checkbox" class="checkbox" onclick="event.stopPropagation();" onchange="toggleInterestFromCheckbox(${index}, this.checked)">
+            <input type="checkbox" class="row-checkbox" onchange="updateMasterCheckboxState()">
         </div>
         <div>${index + 1}</div>
         <div class="interest-name">${escapeHtml(interest.name)}</div>
@@ -1129,6 +1129,33 @@ function removeInterest(interestId) {
     } catch (error) {
         console.error('Remove interest error:', error);
         showToast('Error removing interest', 'error');
+    }
+}
+
+function toggleMasterCheckbox() {
+    const masterCheckbox = document.getElementById('masterCheckbox');
+    const allCheckboxes = document.querySelectorAll('.row-checkbox');
+
+    allCheckboxes.forEach(cb => {
+        cb.checked = masterCheckbox.checked;
+    });
+}
+
+function updateMasterCheckboxState() {
+    const masterCheckbox = document.getElementById('masterCheckbox');
+    const allCheckboxes = document.querySelectorAll('.row-checkbox');
+    const total = allCheckboxes.length;
+    const checked = Array.from(allCheckboxes).filter(cb => cb.checked).length;
+
+    if (checked === total) {
+        masterCheckbox.checked = true;
+        masterCheckbox.indeterminate = false;
+    } else if (checked === 0) {
+        masterCheckbox.checked = false;
+        masterCheckbox.indeterminate = false;
+    } else {
+        masterCheckbox.checked = false;
+        masterCheckbox.indeterminate = true;
     }
 }
 
