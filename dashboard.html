@@ -855,21 +855,34 @@ async function loadUserData() {
 function updateUI() {
     if (!currentUser || !userData) return;
 
-    // Update user name
-    userName.textContent = currentUser.displayName || 'User';
+    const displayName = currentUser.displayName || 'User';
+    const email = currentUser.email || 'Not Available';
+    const photo = currentUser.photoURL;
 
-    // Update profile image
-    if (currentUser.photoURL) {
-        profileImage.src = currentUser.photoURL;
+    // 👤 Header (left side greeting)
+    userName.textContent = displayName;
+
+    // 👤 Top-right profile initials or photo
+    if (photo) {
+        profileImage.src = photo;
         profileImage.style.display = 'block';
         profileInitial.style.display = 'none';
     } else {
-        profileInitial.textContent = currentUser.displayName ? currentUser.displayName.charAt(0).toUpperCase() : 'U';
+        profileInitial.textContent = displayName.charAt(0).toUpperCase();
         profileInitial.style.display = 'block';
         profileImage.style.display = 'none';
     }
 
-    // Update plan info
+    // ✅ 🧠 🔥 FIX: Dropdown Profile Info (YOU MISSED THIS!)
+    const dropdownName = document.getElementById('dropdownName');
+    const dropdownEmail = document.getElementById('dropdownEmail');
+    const dropdownProfileImage = document.getElementById('dropdownProfileImage');
+
+    if (dropdownName) dropdownName.textContent = displayName;
+    if (dropdownEmail) dropdownEmail.textContent = email;
+    if (dropdownProfileImage && photo) dropdownProfileImage.src = photo;
+
+    // 🔁 Plan Info
     const plan = userData.currentPlan || 'free';
     planBadge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
 
@@ -879,17 +892,13 @@ function updateUI() {
         const remaining = Math.max(0, maxSearches - used);
         searchesLeft.textContent = `${remaining}/${maxSearches} searches`;
         upgradeBtn.style.display = 'flex';
-        
-        if (remaining === 0) {
-            searchesLeft.style.color = '#e74c3c';
-        } else {
-            searchesLeft.style.color = '#2ecc71';
-        }
+        searchesLeft.style.color = remaining === 0 ? '#e74c3c' : '#2ecc71';
     } else {
         searchesLeft.textContent = 'Unlimited searches';
         upgradeBtn.style.display = 'none';
     }
 }
+
 
 // Check if user can perform search
 function canPerformSearch() {
