@@ -648,14 +648,12 @@ z-index: 100;
 
                 <div class="results-table" id="resultsTable">
                    <div class="table-header">
-    <div>
-        <input type="checkbox" id="masterCheckbox" onchange="toggleMasterCheckbox()">
-    </div>
-    <div>SL</div>
-    <div>Interest Name</div>
-    <div>Size</div>
-    <div>Topic</div>
-</div>
+                   <div></div>
+                   <div>SL</div>
+                   <div>Interest Name</div>
+                   <div>Size</div>
+                   <div>Topic</div>
+               </div>
                     <div id="resultsBody">
                         <div class="empty-state">
                             <h3>🔍 Ready to Explore</h3>
@@ -966,7 +964,7 @@ function displayResults() {
     resultsBody.innerHTML = allInterests.map((interest, index) => `
     <div class="table-row" data-index="${index}" onclick="toggleInterestRow(${index})" style="cursor: pointer;">
         <div>
-            <input type="checkbox" class="row-checkbox" onchange="updateMasterCheckboxState()">
+            <input type="checkbox" class="checkbox" onclick="event.stopPropagation();" onchange="toggleInterestFromCheckbox(${index}, this.checked)">
         </div>
         <div>${index + 1}</div>
         <div class="interest-name">${escapeHtml(interest.name)}</div>
@@ -1107,36 +1105,6 @@ function removeInterest(interestId) {
         showToast('Error removing interest', 'error');
     }
 }
-
-function toggleMasterCheckbox() {
-    const masterCheckbox = document.getElementById('masterCheckbox');
-    const allRows = document.querySelectorAll('.table-row');
-
-    selectedInterests = [];
-
-    allRows.forEach(row => {
-        const checkbox = row.querySelector('.row-checkbox');
-        const index = parseInt(row.getAttribute('data-index'));
-
-        if (!checkbox || isNaN(index)) return;
-
-        checkbox.checked = masterCheckbox.checked;
-
-        if (masterCheckbox.checked) {
-            const interest = allInterests[index];
-            if (interest && !selectedInterests.find(item => item.id === interest.id)) {
-                selectedInterests.push(interest);
-            }
-        }
-    });
-
-    updateSelectedList();
-    updateMasterCheckboxState(); // sync state
-    showToast(masterCheckbox.checked
-        ? `सभी ${selectedInterests.length} इंटरेस्ट चुने गए`
-        : 'सभी चयन हटाए गए');
-}
-
 
 // Clear selection
 function clearSelection() {
