@@ -648,12 +648,15 @@ z-index: 100;
 
                 <div class="results-table" id="resultsTable">
                    <div class="table-header">
-                   <div></div>
-                   <div>SL</div>
-                   <div>Interest Name</div>
-                   <div>Size</div>
-                   <div>Topic</div>
-               </div>
+  <div>
+    <input type="checkbox" id="masterCheckbox" class="checkbox">
+  </div>
+  <div>SL</div>
+  <div>Interest Name</div>
+  <div>Size</div>
+  <div>Topic</div>
+</div>
+
                     <div id="resultsBody">
                         <div class="empty-state">
                             <h3>🔍 Ready to Explore</h3>
@@ -740,6 +743,19 @@ const resultsBody = document.getElementById('resultsBody');
 const selectedList = document.getElementById('selectedList');
 const selectedCount = document.getElementById('selectedCount');
 const selectAllBtn = document.getElementById('selectAllBtn');
+const masterCheckbox = document.getElementById('masterCheckbox');
+
+masterCheckbox.addEventListener('change', () => {
+    const isChecked = masterCheckbox.checked;
+
+    document.querySelectorAll('.table-row .checkbox').forEach((cb, index) => {
+        cb.checked = isChecked;
+
+        // Call the toggle logic for each interest
+        toggleInterestFromCheckbox(index, isChecked);
+    });
+});
+
 const clearBtn = document.getElementById('clearBtn');
 const copyBtn = document.getElementById('copyBtn');
 const downloadBtn = document.getElementById('downloadBtn');
@@ -1062,6 +1078,28 @@ function selectAll() {
 function updateSelectedList() {
     selectedCount.textContent = selectedInterests.length;
 
+    // ✅ Auto-toggle both checkboxes (master + toggle button)
+    if (allInterests && allInterests.length > 0) {
+        const allSelected = selectedInterests.length === allInterests.length;
+
+        // Toggle top-right Select All button state
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const selectAllToggle = document.getElementById('selectAllToggle');
+        if (selectAllCheckbox) selectAllCheckbox.checked = allSelected;
+        if (selectAllToggle) {
+            if (allSelected) {
+                selectAllToggle.classList.add('active');
+            } else {
+                selectAllToggle.classList.remove('active');
+            }
+        }
+
+        // ✅ Master checkbox sync (SL वाली)
+        const masterCheckbox = document.getElementById('masterCheckbox');
+        if (masterCheckbox) masterCheckbox.checked = allSelected;
+    }
+
+    // ✅ Selected List rendering
     if (selectedInterests.length === 0) {
         selectedList.innerHTML = `
             <div class="empty-state">
