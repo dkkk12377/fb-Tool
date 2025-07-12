@@ -1258,38 +1258,19 @@ document.addEventListener('click', (e) => {
 });
 
 // Profile click handler
+// ✅ Profile button click से dropdown toggle
 profileBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    const profileDropdown = document.createElement('div');
-    profileDropdown.className = 'dropdown show';
-    profileDropdown.style.right = '60px';
-    profileDropdown.innerHTML = `
-        <div class="dropdown-item" style="pointer-events: none;">
-            <img src="${currentUser.photoURL || ''}" alt="Profile" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
-            <div>
-                <div style="font-weight: 600;">${currentUser.displayName || 'User'}</div>
-                <div style="font-size: 12px; opacity: 0.7;">${currentUser.email}</div>
-            </div>
-        </div>
-    `;
-    
-    const existingProfileDropdown = document.querySelector('.profile-dropdown');
-    if (existingProfileDropdown) {
-        existingProfileDropdown.remove();
-    }
-    
-    profileDropdown.className += ' profile-dropdown';
-    document.querySelector('.profile-section').appendChild(profileDropdown);
-    
-    setTimeout(() => {
-        document.addEventListener('click', function closeProfileDropdown(e) {
-            if (!profileDropdown.contains(e.target) && !profileBtn.contains(e.target)) {
-                profileDropdown.remove();
-                document.removeEventListener('click', closeProfileDropdown);
-            }
-        });
-    }, 0);
+    dropdown.classList.toggle('show');
 });
+
+// ✅ बाहर click करने पर dropdown hide हो
+document.addEventListener('click', (e) => {
+    if (!dropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+        dropdown.classList.remove('show');
+    }
+});
+
 
 // Make functions globally accessible
 window.toggleInterestRow = toggleInterestRow;
