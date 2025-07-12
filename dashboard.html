@@ -935,7 +935,24 @@ async function searchInterests() {
     }
 }
 
-// Display search results
+// Add this function before the displayResults function
+function formatAudienceSize(lowerBound, upperBound) {
+    function formatNumber(num) {
+        if (num >= 1000000) {
+            return (num / 1000000).toFixed(0) + 'M';
+        } else if (num >= 1000) {
+            return (num / 1000).toFixed(0) + 'K';
+        }
+        return num.toString();
+    }
+    
+    const lower = formatNumber(lowerBound || 0);
+    const upper = formatNumber(upperBound || 0);
+    
+    return `${lower} - ${upper}`;
+}
+
+// Replace the displayResults function with this updated version
 function displayResults() {
     resultsCount.textContent = `Search Results: ${allInterests.length}`;
     
@@ -951,7 +968,7 @@ function displayResults() {
         </div>
         <div>${index + 1}</div>
         <div class="interest-name">${escapeHtml(interest.name)}</div>
-        <div>${interest.audience_size_lower_bound || 0} - ${interest.audience_size_upper_bound || 0}</div>
+        <div>${formatAudienceSize(interest.audience_size_lower_bound, interest.audience_size_upper_bound)}</div>
         <div>${interest.topic || 'N/A'}</div>
     </div>
 `).join('');
