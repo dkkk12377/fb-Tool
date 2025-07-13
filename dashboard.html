@@ -1427,7 +1427,7 @@
                     <span class="searches-left" id="searchesLeft">Unlimited searches</span>
                 </div>
                 <button class="upgrade-btn" id="upgradeBtn">
-                         Get Unlimited Searches
+                    ⬆️ Get Unlimited Searches
                 </button>
 <button class="theme-toggle-btn" id="themeToggleBtn">
   <img id="themeIcon" src="sun.svg" alt="Toggle Theme" />
@@ -1701,10 +1701,10 @@ function updateUI() {
     if (dropdownProfileImage && photo) dropdownProfileImage.src = photo;
 
     // 🔁 Plan Info
-    const plan = userData.currentPlan || 'freee';
+    const plan = userData.currentPlan || 'free';
     planBadge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
 
-    if (plan === 'freee') {
+    if (plan === 'free') {
         const maxSearches = 3;
         const used = userData.searchesUsed || 0;
         const remaining = Math.max(0, maxSearches - used);
