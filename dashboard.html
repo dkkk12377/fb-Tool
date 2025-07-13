@@ -2122,14 +2122,28 @@ const lightStyle = document.getElementById("lightStyle");
 const themeBtn = document.getElementById("themeToggleBtn");
 const themeIcon = document.getElementById("themeIcon");
 
+// Theme Setup
 const savedTheme = localStorage.getItem("theme");
-if (savedTheme === "light") {
-    darkStyle.disabled = true;
-    lightStyle.disabled = false;
-    themeIcon.src = "moon.svg"; // Dark mode icon
+
+// If user has previously selected a theme
+if (savedTheme) {
+    if (savedTheme === "light") {
+        darkStyle.disabled = true;
+        lightStyle.disabled = false;
+        themeIcon.src = "moon.svg";
+    } else {
+        darkStyle.disabled = false;
+        lightStyle.disabled = true;
+        themeIcon.src = "sun.svg";
+    }
 } else {
-    themeIcon.src = "sun.svg"; // Light mode icon
+    // Default to dark theme on first visit
+    darkStyle.disabled = false;
+    lightStyle.disabled = true;
+    themeIcon.src = "sun.svg";
+    localStorage.setItem("theme", "dark");
 }
+
 
 themeBtn.addEventListener("click", () => {
     const isDark = !darkStyle.disabled;
@@ -2140,6 +2154,7 @@ themeBtn.addEventListener("click", () => {
     themeIcon.src = isDark ? "sun.svg" : "moon.svg";
     localStorage.setItem("theme", isDark ? "light" : "dark");
 });
+
 
 });
 </script>
