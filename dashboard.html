@@ -654,7 +654,30 @@
         .explore-btn:active {
             transform: translateY(1px);
         }
-    </style>
+.theme-toggle-btn {
+  background: #4a5568;
+  border: 1px solid #718096;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: #718096;
+  border-color: #a0aec0;
+}
+
+.theme-toggle-btn img {
+  width: 24px;
+  height: 24px;
+  filter: invert(1); /* white icon */
+}
+
 </style>
 
 <style id="lightStyle" disabled>
@@ -1369,7 +1392,29 @@
         .explore-btn:active {
             transform: translateY(1px);
         }
-    
+    .theme-toggle-btn {
+  background: #edf2f7;
+  border: 1px solid #cbd5e0;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: #e2e8f0;
+}
+
+.theme-toggle-btn img {
+  width: 24px;
+  height: 24px;
+  filter: invert(0); /* dark icon */
+}
+
 </style>
 
 </head>
@@ -1387,7 +1432,10 @@
                 <button class="upgrade-btn" id="upgradeBtn">
                     ⬆️ Get Unlimited Searches
                 </button>
-<button id="themeToggleBtn">🌗 Toggle Theme</button>
+<button class="theme-toggle-btn" id="themeToggleBtn">
+  <img id="themeIcon" src="sun.svg" alt="Toggle Theme" />
+</button>
+
 
                 <div class="profile-section">
                     <button class="profile-btn" id="profileBtn">
@@ -2072,12 +2120,15 @@ document.addEventListener('DOMContentLoaded', () => {
 const darkStyle = document.getElementById("darkStyle");
 const lightStyle = document.getElementById("lightStyle");
 const themeBtn = document.getElementById("themeToggleBtn");
+const themeIcon = document.getElementById("themeIcon");
 
-// Load from localStorage
 const savedTheme = localStorage.getItem("theme");
 if (savedTheme === "light") {
     darkStyle.disabled = true;
     lightStyle.disabled = false;
+    themeIcon.src = "moon.svg"; // Dark mode icon
+} else {
+    themeIcon.src = "sun.svg"; // Light mode icon
 }
 
 themeBtn.addEventListener("click", () => {
@@ -2086,6 +2137,7 @@ themeBtn.addEventListener("click", () => {
     darkStyle.disabled = isDark;
     lightStyle.disabled = !isDark;
 
+    themeIcon.src = isDark ? "sun.svg" : "moon.svg";
     localStorage.setItem("theme", isDark ? "light" : "dark");
 });
 
