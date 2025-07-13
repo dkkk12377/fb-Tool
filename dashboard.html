@@ -451,18 +451,6 @@
             font-size: 14px;
         }
 
-        .copy-btn {
-            background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
-            color: white;
-            box-shadow: 0 2px 4px rgba(49, 130, 206, 0.2);
-        }
-
-        .copy-btn:hover {
-            background: linear-gradient(135deg, #2c5282 0%, #2a4365 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(49, 130, 206, 0.3);
-        }
-
         .download-btn {
             background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
             color: white;
@@ -475,17 +463,37 @@
             box-shadow: 0 4px 8px rgba(56, 161, 105, 0.3);
         }
 
-        .clear-selected-btn {
-            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
-            color: white;
-            box-shadow: 0 2px 4px rgba(229, 62, 62, 0.2);
-        }
+        .copy-clear-group {
+    display: flex;
+    gap: 12px;
+}
 
-        .clear-selected-btn:hover {
-            background: linear-gradient(135deg, #c53030 0%, #9c2626 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(229, 62, 62, 0.3);
-        }
+.btn-light {
+    background: #e2e8f0;
+    color: #2d3748;
+    border: 1px solid #cbd5e0;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-light:hover {
+    background: #cbd5e0;
+}
+
+.btn-light.danger {
+    background: #fff5f5;
+    color: #c53030;
+    border-color: #feb2b2;
+}
+
+.btn-light.danger:hover {
+    background: #fed7d7;
+}
+
 
         .loading {
             text-align: center;
@@ -808,17 +816,15 @@
                     </div>
                 </div>
 
-                <div class="action-buttons">
-                    <button class="action-btn copy-btn" id="copyBtn">
-                        📋 Copy All
-                    </button>
-                    <button class="action-btn download-btn" id="downloadBtn">
-                        💾 Download
-                    </button>
-                    <button class="action-btn clear-selected-btn" id="clearSelectedBtn">
-                        🗑️ Clear Selected
-                    </button>
-                </div>
+               <!-- New clean Copy & Clear in same row -->
+<div class="action-buttons">
+    <div class="copy-clear-group">
+        <button class="btn-light" id="copyBtn">Copy</button>
+        <button class="btn-light danger" id="clearSelectedBtn">Clear</button>
+    </div>
+    <button class="action-btn download-btn" id="downloadBtn">💾 Download</button>
+</div>
+
             </div>
         </div>
     </div>
