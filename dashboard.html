@@ -1701,10 +1701,10 @@ function updateUI() {
     if (dropdownProfileImage && photo) dropdownProfileImage.src = photo;
 
     // 🔁 Plan Info
-    const plan = userData.currentPlan || 'free';
+    const plan = userData.currentPlan || 'freee';
     planBadge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
 
-    if (plan === 'free') {
+    if (plan === 'freee') {
         const maxSearches = 3;
         const used = userData.searchesUsed || 0;
         const remaining = Math.max(0, maxSearches - used);
