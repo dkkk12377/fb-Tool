@@ -463,9 +463,12 @@
             box-shadow: 0 4px 8px rgba(56, 161, 105, 0.3);
         }
 
-        .copy-clear-group {
+        .top-actions {
     display: flex;
-    gap: 12px;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    margin-bottom: 16px;
 }
 
 .btn-light {
@@ -493,6 +496,7 @@
 .btn-light.danger:hover {
     background: #fed7d7;
 }
+
 
 
         .loading {
@@ -817,13 +821,17 @@
                 </div>
 
                <!-- New clean Copy & Clear in same row -->
+<!-- Copy and Clear on top in single row, Download remains below -->
+<div class="top-actions">
+    <button class="btn-light" id="copyBtn">Copy All</button>
+    <button class="btn-light danger" id="clearSelectedBtn">Clear Selected</button>
+</div>
+
+<!-- Download button stays below as-is -->
 <div class="action-buttons">
-    <div class="copy-clear-group">
-        <button class="btn-light" id="copyBtn">Copy</button>
-        <button class="btn-light danger" id="clearSelectedBtn">Clear</button>
-    </div>
     <button class="action-btn download-btn" id="downloadBtn">💾 Download</button>
 </div>
+
 
             </div>
         </div>
