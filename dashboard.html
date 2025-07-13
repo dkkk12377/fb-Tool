@@ -275,10 +275,10 @@
         }
 
         .select-all-btn {
-            background: #3182ce;
-            color: white;
+            background: #ebf8ff;
+            color: #3182ce;
             padding: 8px 16px;
-            border: 1px solid #4299e1;
+            border: 1px solid #bee3f8;
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -287,15 +287,15 @@
         }
 
         .select-all-btn:hover {
-            background: #2c5282;
-            border-color: #3182ce;
+            background: #bee3f8;
+            border-color: #90cdf4;
         }
 
         .clear-btn {
-            background: #742a2a;
-            color: #feb2b2;
+            background: #fed7d7;
+            color: #e53e3e;
             padding: 8px 16px;
-            border: 1px solid #e53e3e;
+            border: 1px solid #feb2b2;
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -304,9 +304,8 @@
         }
 
         .clear-btn:hover {
-            background: #e53e3e;
+            background: #feb2b2;
             border-color: #fc8181;
-            color: white;
         }
 
         .results-table {
@@ -715,15 +714,15 @@
                 <div class="search-container">
                     <input type="text" id="searchInput" class="search-input" placeholder="Search Interests (e.g., fitness, yoga, golf)...">
                     <button class="explore-btn" id="exploreBtn">
-                        🔍 Search
+                         Search
                     </button>
                 </div>
 
                 <div class="results-header">
                     <div class="results-count" id="resultsCount">Search Results: 0</div>
                     <div class="header-actions">
-                        <button class="select-all-btn" id="selectAllBtn">📋 Select All</button>
-                        <button class="clear-btn" id="clearBtn">🗑️ Clear Selection</button>
+                        <button class="select-all-btn" id="selectAllBtn"> Select All</button>
+                        <button class="clear-btn" id="clearBtn"> Clear Selection</button>
                     </div>
                 </div>
 
@@ -753,8 +752,8 @@
                     <div class="selected-count" id="selectedCount">0</div>
                 </div>
                 <div class="top-actions">
-                    <button class="btn-light" id="copyBtn">📋 Copy All</button>
-                    <button class="btn-light danger" id="clearSelectedBtn">🗑️ Clear Selected</button>
+                    <button class="btn-light" id="copyBtn">Copy All</button>
+                    <button class="btn-light danger" id="clearSelectedBtn">Clear Selected</button>
                 </div>
                 <div class="selected-list scrollbar-custom" id="selectedList">
                     <div class="empty-state">
