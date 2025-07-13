@@ -2146,13 +2146,20 @@ if (savedTheme) {
 
 
 themeBtn.addEventListener("click", () => {
-    const isDark = !darkStyle.disabled;
+    const isCurrentlyDark = !darkStyle.disabled;
 
-    darkStyle.disabled = isDark;
-    lightStyle.disabled = !isDark;
+    // Toggle theme styles
+    darkStyle.disabled = isCurrentlyDark;
+    lightStyle.disabled = !isCurrentlyDark;
 
-    themeIcon.src = isDark ? "sun.svg" : "moon.svg";
-    localStorage.setItem("theme", isDark ? "light" : "dark");
+    // Update icon - IMPORTANT: always force set src
+    if (isCurrentlyDark) {
+        themeIcon.src = "moon.svg"; // Going to light, show moon icon
+        localStorage.setItem("theme", "light");
+    } else {
+        themeIcon.src = "sun.svg"; // Going to dark, show sun icon
+        localStorage.setItem("theme", "dark");
+    }
 });
 
 
