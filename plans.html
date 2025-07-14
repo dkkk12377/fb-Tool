@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plans | Meta Interest Finder Tool</title>
-   <style>
+    <style id="darkStyle">
         * {
             margin: 0;
             padding: 0;
@@ -411,18 +411,24 @@
         }
     </style>
 
-
+    <style id="lightStyle" disabled>
+        /* Light theme styles - you can add these yourself */
+    </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <div class="welcome-text">
-                <span>👋</span> Hi, <span id="userName">Dinesh</span>
+                <span>👋</span> Hi, <span id="userName">Loading...</span>
             </div>
             <div class="header-right">
                 <div class="plan-info">
                     <span class="plan-badge" id="planBadge">Free</span>
-                    <span class="searches-left" id="searchesLeft">3 searches left</span>
+                    <span class="searches-left" id="searchesLeft">Unlimited searches</span>
                 </div>
                 <button class="upgrade-btn" id="upgradeBtn">
                     Get Unlimited Searches
@@ -511,7 +517,190 @@
                         <li>Interest direct download</li>
                         <li>Priority support</li>
                         <li>Yearly subscription</li>
-                        <li>Save 42% vs Monthly</li>
                     </ul>
                     <button class="plan-btn secondary" onclick="selectPlan('yearly')">Choose Yearly</button>
                 </div>
+
+                <!-- Lifetime Plan -->
+                <div class="plan-card">
+                    <h3 class="plan-name">Lifetime</h3>
+                    <div class="plan-price">₹9,999</div>
+                    <div class="plan-duration">One-time cost</div>
+                    <ul class="plan-features">
+                        <li>Unlimited searches</li>
+                        <li>Interest direct download</li>
+                        <li>Priority support</li>
+                        <li>Lifetime access</li>
+                    </ul>
+                    <button class="plan-btn secondary" onclick="selectPlan('lifetime')">Choose Lifetime</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            // Add your Firebase config here
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Initialize services
+        const auth = firebase.auth();
+        const firestore = firebase.firestore();
+
+        // DOM elements
+        const profileBtn = document.getElementById('profileBtn');
+        const dropdown = document.getElementById('dropdown');
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const darkStyle = document.getElementById('darkStyle');
+        const lightStyle = document.getElementById('lightStyle');
+        const userName = document.getElementById('userName');
+        const planBadge = document.getElementById('planBadge');
+        const searchesLeft = document.getElementById('searchesLeft');
+        const upgradeBtn = document.getElementById('upgradeBtn');
+        const toast = document.getElementById('toast');
+
+        // Check authentication state
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            loadUserProfile(user);
+        });
+
+        // Load user profile
+        function loadUserProfile(user) {
+            userName.textContent = user.displayName || 'User';
+            
+            // Load user data from Firestore
+            firestore.collection('users').doc(user.uid).get().then(doc => {
+                if (doc.exists) {
+                    const userData = doc.data();
+                    updatePlanDisplay(userData.plan || 'free');
+                }
+            });
+
+            // Update profile image
+            if (user.photoURL) {
+                document.getElementById('profileImage').src = user.photoURL;
+                document.getElementById('profileImage').style.display = 'block';
+                document.getElementById('profileInitial').style.display = 'none';
+                document.getElementById('dropdownProfileImage').src = user.photoURL;
+            } else {
+                document.getElementById('profileInitial').textContent = user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U';
+            }
+
+            // Update dropdown info
+            document.getElementById('dropdownName').textContent = user.displayName || 'User';
+            document.getElementById('dropdownEmail').textContent = user.email || '';
+        }
+
+        // Update plan display
+        function updatePlanDisplay(plan) {
+            const planButtons = document.querySelectorAll('.plan-btn');
+            planButtons.forEach(btn => {
+                btn.classList.remove('current');
+                if (btn.textContent.includes('Current')) {
+                    btn.textContent = btn.textContent.replace('Current Plan', 'Choose Plan');
+                    btn.classList.add('secondary');
+                }
+            });
+
+            switch(plan) {
+                case 'free':
+                    planBadge.textContent = 'Free';
+                    searchesLeft.textContent = '3 searches per day';
+                    document.getElementById('freePlanBtn').classList.add('current');
+                    document.getElementById('freePlanBtn').textContent = 'Current Plan';
+                    break;
+                case 'monthly':
+                    planBadge.textContent = 'Monthly';
+                    searchesLeft.textContent = 'Unlimited searches';
+                    document.querySelector('[onclick="selectPlan(\'monthly\')"]').classList.add('current');
+                    document.querySelector('[onclick="selectPlan(\'monthly\')"]').textContent = 'Current Plan';
+                    break;
+                case 'yearly':
+                    planBadge.textContent = 'Yearly';
+                    searchesLeft.textContent = 'Unlimited searches';
+                    document.querySelector('[onclick="selectPlan(\'yearly\')"]').classList.add('current');
+                    document.querySelector('[onclick="selectPlan(\'yearly\')"]').textContent = 'Current Plan';
+                    break;
+                case 'lifetime':
+                    planBadge.textContent = 'Lifetime';
+                    searchesLeft.textContent = 'Unlimited searches';
+                    document.querySelector('[onclick="selectPlan(\'lifetime\')"]').classList.add('current');
+                    document.querySelector('[onclick="selectPlan(\'lifetime\')"]').textContent = 'Current Plan';
+                    break;
+            }
+        }
+
+        // Select plan function
+        function selectPlan(plan) {
+            showToast('Redirecting to payment...', 'success');
+            
+            // Simulate payment redirect
+            setTimeout(() => {
+                // In a real app, this would redirect to payment gateway
+                showToast('Payment integration coming soon!', 'info');
+            }, 1000);
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Profile dropdown toggle
+        profileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle('show');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', () => {
+            dropdown.classList.remove('show');
+        });
+
+        // Theme toggle
+        themeToggleBtn.addEventListener('click', () => {
+            if (darkStyle.disabled) {
+                darkStyle.disabled = false;
+                lightStyle.disabled = true;
+                document.getElementById('themeIcon').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='5'/%3E%3Cline x1='12' y1='1' x2='12' y2='3'/%3E%3Cline x1='12' y1='21' x2='12' y2='23'/%3E%3Cline x1='4.22' y1='4.22' x2='5.64' y2='5.64'/%3E%3Cline x1='18.36' y1='18.36' x2='19.78' y2='19.78'/%3E%3Cline x1='1' y1='12' x2='3' y2='12'/%3E%3Cline x1='21' y1='12' x2='23' y2='12'/%3E%3Cline x1='4.22' y1='19.78' x2='5.64' y2='18.36'/%3E%3Cline x1='18.36' y1='5.64' x2='19.78' y2='4.22'/%3E%3C/svg%3E";
+            } else {
+                darkStyle.disabled = true;
+                lightStyle.disabled = false;
+                document.getElementById('themeIcon').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'/%3E%3C/svg%3E";
+            }
+        });
+
+        // Logout function
+        function logout() {
+            auth.signOut().then(() => {
+                window.location.href = 'login.html';
+            }).catch(error => {
+                console.error('Error signing out:', error);
+                showToast('Error signing out', 'error');
+            });
+        }
+
+        // Upgrade button click
+        upgradeBtn.addEventListener('click', () => {
+            document.querySelector('.plans-section').scrollIntoView({ behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>
