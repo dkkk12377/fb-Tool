@@ -947,166 +947,355 @@
     <!-- Toast notification -->
     <div class="toast" id="toast"></div>
 
-    <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            // Add your Firebase config here
-        };
+   // Import Firebase modules (for v9+ modular SDK)
+import { initializeApp } from "firebase/app";
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
+import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
+import { getAnalytics } from "firebase/analytics";
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
+// Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyB-wOqU0JnvWM3Nt91xhac2x_qO5a54GMQ",
+    authDomain: "dinesh-3b413.firebaseapp.com",
+    projectId: "dinesh-3b413",
+    storageBucket: "dinesh-3b413.firebasestorage.app",
+    messagingSenderId: "1053189064237",
+    appId: "1:1053189064237:web:d261dbebb5e7299e829aa4",
+    measurementId: "G-FPVH4NC1ML"
+};
 
-        // Initialize services
-        const auth = firebase.auth();
-        const firestore = firebase.firestore();
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const analytics = getAnalytics(app);
 
-        // DOM elements
-        const profileBtn = document.getElementById('profileBtn');
-        const dropdown = document.getElementById('dropdown');
-        const themeToggleBtn = document.getElementById('themeToggleBtn');
-        const darkStyle = document.getElementById('darkStyle');
-        const lightStyle = document.getElementById('lightStyle');
-        const userName = document.getElementById('userName');
-        const planBadge = document.getElementById('planBadge');
-        const searchesLeft = document.getElementById('searchesLeft');
-        const upgradeBtn = document.getElementById('upgradeBtn');
-        const toast = document.getElementById('toast');
+// DOM elements
+const profileBtn = document.getElementById('profileBtn');
+const dropdown = document.getElementById('dropdown');
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+const themeIcon = document.getElementById('themeIcon');
+const userName = document.getElementById('userName');
+const planBadge = document.getElementById('planBadge');
+const searchesLeft = document.getElementById('searchesLeft');
+const upgradeBtn = document.getElementById('upgradeBtn');
+const toast = document.getElementById('toast');
 
-        // Check authentication state
-        auth.onAuthStateChanged(user => {
-            if (!user) {
-                window.location.href = 'login.html';
-                return;
-            }
-            loadUserProfile(user);
-        });
+// Theme icons
+const sunIcon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='5'/%3E%3Cline x1='12' y1='1' x2='12' y2='3'/%3E%3Cline x1='12' y1='21' x2='12' y2='23'/%3E%3Cline x1='4.22' y1='4.22' x2='5.64' y2='5.64'/%3E%3Cline x1='18.36' y1='18.36' x2='19.78' y2='19.78'/%3E%3Cline x1='1' y1='12' x2='3' y2='12'/%3E%3Cline x1='21' y1='12' x2='23' y2='12'/%3E%3Cline x1='4.22' y1='19.78' x2='5.64' y2='18.36'/%3E%3Cline x1='18.36' y1='5.64' x2='19.78' y2='4.22'/%3E%3C/svg%3E";
+const moonIcon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'/%3E%3C/svg%3E";
 
-        // Load user profile
-        function loadUserProfile(user) {
-            userName.textContent = user.displayName || 'User';
+// Theme management
+let isDarkMode = false;
+
+// Initialize theme on page load
+function initializeTheme() {
+    // Check for saved theme preference or default to light mode
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+        isDarkMode = savedTheme === 'dark';
+    } else {
+        // Check system preference
+        isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    
+    applyTheme();
+}
+
+// Apply theme to document
+function applyTheme() {
+    if (isDarkMode) {
+        document.body.classList.add('dark-theme');
+        themeIcon.src = sunIcon;
+        themeIcon.alt = 'Switch to light mode';
+    } else {
+        document.body.classList.remove('dark-theme');
+        themeIcon.src = moonIcon;
+        themeIcon.alt = 'Switch to dark mode';
+    }
+    
+    // Save theme preference
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+}
+
+// Toggle theme
+function toggleTheme() {
+    isDarkMode = !isDarkMode;
+    applyTheme();
+    
+    // Show feedback
+    showToast(isDarkMode ? 'Dark mode enabled' : 'Light mode enabled', 'success');
+}
+
+// Check authentication state
+onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        window.location.href = 'login.html';
+        return;
+    }
+    loadUserProfile(user);
+});
+
+// Load user profile
+async function loadUserProfile(user) {
+    try {
+        userName.textContent = user.displayName || 'User';
+        
+        // Load user data from Firestore
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (userDoc.exists()) {
+            const userData = userDoc.data();
+            updatePlanDisplay(userData.currentPlan || 'free');
             
-            // Load user data from Firestore
-            firestore.collection('users').doc(user.uid).get().then(doc => {
-                if (doc.exists) {
-                    const userData = doc.data();
-                    updatePlanDisplay(userData.plan || 'free');
-                }
+            // Update searches count if on free plan
+            if (userData.currentPlan === 'free' || !userData.currentPlan) {
+                const searchesUsed = userData.searchesUsed || 0;
+                const searchesRemaining = Math.max(0, 3 - searchesUsed);
+                searchesLeft.textContent = `${searchesRemaining} searches remaining today`;
+            }
+        } else {
+            // Create user document if it doesn't exist
+            await updateDoc(userDocRef, {
+                name: user.displayName || 'User',
+                email: user.email,
+                currentPlan: 'free',
+                searchesUsed: 0,
+                lastSearchDate: new Date().toISOString().split('T')[0],
+                createdAt: new Date(),
+                updatedAt: new Date()
             });
-
-            // Update profile image
-            if (user.photoURL) {
-                document.getElementById('profileImage').src = user.photoURL;
-                document.getElementById('profileImage').style.display = 'block';
-                document.getElementById('profileInitial').style.display = 'none';
-                document.getElementById('dropdownProfileImage').src = user.photoURL;
-            } else {
-                document.getElementById('profileInitial').textContent = user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U';
-            }
-
-            // Update dropdown info
-            document.getElementById('dropdownName').textContent = user.displayName || 'User';
-            document.getElementById('dropdownEmail').textContent = user.email || '';
+            updatePlanDisplay('free');
         }
 
-        // Update plan display
-        function updatePlanDisplay(plan) {
-            const planButtons = document.querySelectorAll('.plan-btn');
-            planButtons.forEach(btn => {
-                btn.classList.remove('current');
-                if (btn.textContent.includes('Current')) {
-                    btn.textContent = btn.textContent.replace('Current Plan', 'Choose Plan');
-                    btn.classList.add('secondary');
-                }
-            });
-
-            switch(plan) {
-                case 'free':
-                    planBadge.textContent = 'Free';
-                    searchesLeft.textContent = '3 searches per day';
-                    document.getElementById('freePlanBtn').classList.add('current');
-                    document.getElementById('freePlanBtn').textContent = 'Current Plan';
-                    break;
-                case 'monthly':
-                    planBadge.textContent = 'Monthly';
-                    searchesLeft.textContent = 'Unlimited searches';
-                    document.querySelector('[onclick="selectPlan(\'monthly\')"]').classList.add('current');
-                    document.querySelector('[onclick="selectPlan(\'monthly\')"]').textContent = 'Current Plan';
-                    break;
-                case 'yearly':
-                    planBadge.textContent = 'Yearly';
-                    searchesLeft.textContent = 'Unlimited searches';
-                    document.querySelector('[onclick="selectPlan(\'yearly\')"]').classList.add('current');
-                    document.querySelector('[onclick="selectPlan(\'yearly\')"]').textContent = 'Current Plan';
-                    break;
-                case 'lifetime':
-                    planBadge.textContent = 'Lifetime';
-                    searchesLeft.textContent = 'Unlimited searches';
-                    document.querySelector('[onclick="selectPlan(\'lifetime\')"]').classList.add('current');
-                    document.querySelector('[onclick="selectPlan(\'lifetime\')"]').textContent = 'Current Plan';
-                    break;
-            }
+        // Update profile image
+        const profileImage = document.getElementById('profileImage');
+        const profileInitial = document.getElementById('profileInitial');
+        const dropdownProfileImage = document.getElementById('dropdownProfileImage');
+        
+        if (user.photoURL) {
+            profileImage.src = user.photoURL;
+            profileImage.style.display = 'block';
+            profileInitial.style.display = 'none';
+            dropdownProfileImage.src = user.photoURL;
+        } else {
+            profileInitial.textContent = user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U';
+            profileImage.style.display = 'none';
+            profileInitial.style.display = 'flex';
         }
 
-        // Select plan function
-        function selectPlan(plan) {
-            showToast('Redirecting to payment...', 'success');
+        // Update dropdown info
+        document.getElementById('dropdownName').textContent = user.displayName || 'User';
+        document.getElementById('dropdownEmail').textContent = user.email || '';
+        
+    } catch (error) {
+        console.error('Error loading user profile:', error);
+        showToast('Error loading profile', 'error');
+    }
+}
+
+// Update plan display
+function updatePlanDisplay(plan) {
+    const planButtons = document.querySelectorAll('.plan-btn');
+    
+    // Reset all buttons
+    planButtons.forEach(btn => {
+        btn.classList.remove('current');
+        btn.classList.remove('primary');
+        btn.classList.add('secondary');
+        
+        // Reset button text
+        if (btn.textContent.includes('Current')) {
+            const originalText = btn.getAttribute('data-original-text') || 'Choose Plan';
+            btn.textContent = originalText;
+        }
+    });
+
+    // Update based on current plan
+    switch(plan) {
+        case 'free':
+            planBadge.textContent = 'Free';
+            planBadge.className = 'plan-badge free';
+            const freePlanBtn = document.getElementById('freePlanBtn');
+            freePlanBtn.classList.add('current');
+            freePlanBtn.classList.remove('secondary');
+            freePlanBtn.textContent = 'Current Plan';
+            break;
             
-            // Simulate payment redirect
-            setTimeout(() => {
-                // In a real app, this would redirect to payment gateway
-                showToast('Payment integration coming soon!', 'info');
-            }, 1000);
-        }
-
-        // Show toast notification
-        function showToast(message, type = 'success') {
-            toast.textContent = message;
-            toast.className = `toast ${type}`;
-            toast.classList.add('show');
+        case 'monthly':
+            planBadge.textContent = 'Monthly';
+            planBadge.className = 'plan-badge monthly';
+            searchesLeft.textContent = 'Unlimited searches';
+            const monthlyBtn = document.querySelector('[onclick="selectPlan(\'monthly\')"]');
+            if (monthlyBtn) {
+                monthlyBtn.classList.add('current');
+                monthlyBtn.classList.remove('secondary');
+                monthlyBtn.textContent = 'Current Plan';
+            }
+            break;
             
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
+        case 'yearly':
+            planBadge.textContent = 'Yearly';
+            planBadge.className = 'plan-badge yearly';
+            searchesLeft.textContent = 'Unlimited searches';
+            const yearlyBtn = document.querySelector('[onclick="selectPlan(\'yearly\')"]');
+            if (yearlyBtn) {
+                yearlyBtn.classList.add('current');
+                yearlyBtn.classList.remove('secondary');
+                yearlyBtn.textContent = 'Current Plan';
+            }
+            break;
+            
+        case 'lifetime':
+            planBadge.textContent = 'Lifetime';
+            planBadge.className = 'plan-badge lifetime';
+            searchesLeft.textContent = 'Unlimited searches';
+            const lifetimeBtn = document.querySelector('[onclick="selectPlan(\'lifetime\')"]');
+            if (lifetimeBtn) {
+                lifetimeBtn.classList.add('current');
+                lifetimeBtn.classList.remove('secondary');
+                lifetimeBtn.textContent = 'Current Plan';
+            }
+            break;
+    }
+}
 
-        // Profile dropdown toggle
-        profileBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            dropdown.classList.toggle('show');
-        });
+// Select plan function
+async function selectPlan(planType) {
+    const user = auth.currentUser;
+    if (!user) {
+        showToast('Please login first', 'error');
+        return;
+    }
 
-        // Close dropdown when clicking outside
-        document.addEventListener('click', () => {
+    try {
+        showToast('Preparing payment...', 'info');
+        
+        // In a real implementation, you would integrate with a payment gateway
+        // For now, we'll simulate the process
+        
+        // Update loading state
+        const buttons = document.querySelectorAll('.plan-btn');
+        buttons.forEach(btn => btn.disabled = true);
+        
+        // Simulate payment processing
+        setTimeout(async () => {
+            try {
+                // Update user's plan in Firestore
+                const userDocRef = doc(db, 'users', user.uid);
+                await updateDoc(userDocRef, {
+                    currentPlan: planType,
+                    planExpiry: getPlanExpiry(planType),
+                    updatedAt: new Date()
+                });
+                
+                // Update UI
+                updatePlanDisplay(planType);
+                showToast(`Successfully upgraded to ${planType} plan!`, 'success');
+                
+                // Re-enable buttons
+                buttons.forEach(btn => btn.disabled = false);
+                
+            } catch (error) {
+                console.error('Error updating plan:', error);
+                showToast('Error updating plan', 'error');
+                buttons.forEach(btn => btn.disabled = false);
+            }
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Error selecting plan:', error);
+        showToast('Error processing request', 'error');
+    }
+}
+
+// Get plan expiry date
+function getPlanExpiry(planType) {
+    const now = new Date();
+    switch(planType) {
+        case 'monthly':
+            return new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+        case 'yearly':
+            return new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+        case 'lifetime':
+            return new Date(2099, 11, 31); // Far future date
+        default:
+            return null;
+    }
+}
+
+// Show toast notification
+function showToast(message, type = 'success') {
+    toast.textContent = message;
+    toast.className = `toast ${type}`;
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+// Logout function
+async function logout() {
+    try {
+        await signOut(auth);
+        window.location.href = 'login.html';
+    } catch (error) {
+        console.error('Error signing out:', error);
+        showToast('Error signing out', 'error');
+    }
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize theme
+    initializeTheme();
+    
+    // Profile dropdown toggle
+    profileBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('show');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target) && !profileBtn.contains(e.target)) {
             dropdown.classList.remove('show');
-        });
-
-        // Theme toggle
-        themeToggleBtn.addEventListener('click', () => {
-            if (darkStyle.disabled) {
-                darkStyle.disabled = false;
-                lightStyle.disabled = true;
-                document.getElementById('themeIcon').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='5'/%3E%3Cline x1='12' y1='1' x2='12' y2='3'/%3E%3Cline x1='12' y1='21' x2='12' y2='23'/%3E%3Cline x1='4.22' y1='4.22' x2='5.64' y2='5.64'/%3E%3Cline x1='18.36' y1='18.36' x2='19.78' y2='19.78'/%3E%3Cline x1='1' y1='12' x2='3' y2='12'/%3E%3Cline x1='21' y1='12' x2='23' y2='12'/%3E%3Cline x1='4.22' y1='19.78' x2='5.64' y2='18.36'/%3E%3Cline x1='18.36' y1='5.64' x2='19.78' y2='4.22'/%3E%3C/svg%3E";
-            } else {
-                darkStyle.disabled = true;
-                lightStyle.disabled = false;
-                document.getElementById('themeIcon').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'/%3E%3C/svg%3E";
-            }
-        });
-
-        // Logout function
-        function logout() {
-            auth.signOut().then(() => {
-                window.location.href = 'login.html';
-            }).catch(error => {
-                console.error('Error signing out:', error);
-                showToast('Error signing out', 'error');
-            });
         }
+    });
 
-        // Upgrade button click
-        upgradeBtn.addEventListener('click', () => {
-            document.querySelector('.plans-section').scrollIntoView({ behavior: 'smooth' });
+    // Theme toggle
+    themeToggleBtn.addEventListener('click', toggleTheme);
+
+    // Upgrade button click
+    upgradeBtn.addEventListener('click', () => {
+        document.querySelector('.plans-section').scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
         });
-    </script>
+    });
+
+    // Store original button texts
+    document.querySelectorAll('.plan-btn').forEach(btn => {
+        if (!btn.textContent.includes('Current')) {
+            btn.setAttribute('data-original-text', btn.textContent);
+        }
+    });
+});
+
+// Make functions available globally
+window.selectPlan = selectPlan;
+window.logout = logout;
+
+// Listen for system theme changes
+if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (!localStorage.getItem('theme')) {
+            isDarkMode = e.matches;
+            applyTheme();
+        }
+    });
+}
 </body>
 </html>
