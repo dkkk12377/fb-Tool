@@ -1264,8 +1264,50 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Theme toggle
-    themeToggleBtn.addEventListener('click', toggleTheme);
+ const darkStyle = document.getElementById("darkStyle");
+const lightStyle = document.getElementById("lightStyle");
+const themeBtn = document.getElementById("themeToggleBtn");
+const themeIcon = document.getElementById("themeIcon");
 
+// Theme Setup
+const savedTheme = localStorage.getItem("theme");
+
+// If user has previously selected a theme
+if (savedTheme) {
+    if (savedTheme === "light") {
+        darkStyle.disabled = true;
+        lightStyle.disabled = false;
+        themeIcon.src = "moon.svg";
+    } else {
+        darkStyle.disabled = false;
+        lightStyle.disabled = true;
+        themeIcon.src = "sun.svg";
+    }
+} else {
+    // Default to dark theme on first visit
+    darkStyle.disabled = false;
+    lightStyle.disabled = true;
+    themeIcon.src = "sun.svg";
+    localStorage.setItem("theme", "dark");
+}
+
+
+themeBtn.addEventListener("click", () => {
+    const isCurrentlyDark = !darkStyle.disabled;
+
+    // Toggle theme styles
+    darkStyle.disabled = isCurrentlyDark;
+    lightStyle.disabled = !isCurrentlyDark;
+
+    // Update icon - IMPORTANT: always force set src
+    if (isCurrentlyDark) {
+        themeIcon.src = "moon.svg"; // Going to light, show moon icon
+        localStorage.setItem("theme", "light");
+    } else {
+        themeIcon.src = "sun.svg"; // Going to dark, show sun icon
+        localStorage.setItem("theme", "dark");
+    }
+});
     // Upgrade button click
     upgradeBtn.addEventListener('click', () => {
         document.querySelector('.plans-section').scrollIntoView({ 
