@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interest Optimizer | Dashboard</title>
+    <title>Meta Interest Finder | Meta Keyword Finder Tool</title>
     <style id="darkStyle">
  
         * {
@@ -32,7 +32,7 @@
             align-items: center;
             margin-bottom: 32px;
             background: #2d3748;
-            padding: 24px 32px;
+            padding: 15px 30px;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
             border: 1px solid #4a5568;
@@ -196,7 +196,7 @@
         .search-container {
             display: flex;
             gap: 16px;
-            margin-bottom: 32px;
+            margin-bottom: 20px;
         }
 
         .search-input {
@@ -223,7 +223,7 @@
         .explore-btn {
             background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
             color: white;
-            padding: 16px 32px;
+            padding: 16px 18px;
             border: none;
             border-radius: 8px;
             font-size: 16px;
@@ -266,18 +266,19 @@
             padding: 8px 16px;
             border-radius: 6px;
             font-weight: 600;
+            font-size: 14px;
             border: 1px solid #38a169;
         }
 
         .header-actions {
             display: flex;
-            gap: 12px;
+            gap: 16px;
         }
 
         .select-all-btn {
            background: #4a5568;
             color: #e2e8f0;
-            padding: 8px 16px;
+            padding: 10px 16px;
             border: 1px solid #bee3f8;
             border-radius: 6px;
             cursor: pointer;
@@ -293,7 +294,7 @@
         .clear-btn {
  background: #4a5568;
             color: #e2e8f0;
-            padding: 8px 16px;
+            padding: 10px 18px;
             border: 1px solid #bee3f8;
             border-radius: 6px;
             cursor: pointer;
@@ -303,7 +304,7 @@
         }
 
         .clear-btn:hover {
-          
+           background: #718096;
         }
 
         .results-table {
@@ -707,7 +708,7 @@
             align-items: center;
             margin-bottom: 32px;
             background: #ffffff;
-            padding: 24px 32px;
+            padding: 15px 30px;
             border-radius: 12px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             border: 1px solid #e2e8f0;
@@ -870,7 +871,7 @@
         .search-container {
             display: flex;
             gap: 16px;
-            margin-bottom: 32px;
+            margin-bottom: 20px;
         }
 
         .search-input {
@@ -939,18 +940,19 @@
             padding: 8px 16px;
             border-radius: 6px;
             font-weight: 600;
+            font-size: 14px;
             border: 1px solid #c6f6d5;
         }
 
         .header-actions {
             display: flex;
-            gap: 12px;
+            gap: 16px;
         }
 
         .select-all-btn {
     background: #e2e8f0;
              color: #2d3748;
-            padding: 8px 16px;
+            padding: 10px 16px;
             border: 1px solid #bee3f8;
             border-radius: 6px;
             cursor: pointer;
@@ -966,7 +968,7 @@
         .clear-btn {
             background: #e2e8f0;
              color: #2d3748;
-            padding: 8px 16px;
+            padding: 10px 18px;
             border: 1px solid #bee3f8;
             border-radius: 6px;
             cursor: pointer;
@@ -1381,6 +1383,12 @@
         .action-btn:active {
             transform: translateY(1px);
         }
+/* Disable blue border on focus (like dark theme) */
+button:focus {
+    outline: none;
+    box-shadow: none;
+}
+
 
         .upgrade-btn:active {
             transform: translateY(1px);
@@ -1427,7 +1435,7 @@
                     <span class="searches-left" id="searchesLeft">Unlimited searches</span>
                 </div>
                 <button class="upgrade-btn" id="upgradeBtn">
-                      Get Unlimited Searches
+                     Get Unlimited Searches
                 </button>
 <button class="theme-toggle-btn" id="themeToggleBtn">
   <img id="themeIcon" src="sun.svg" alt="Toggle Theme" />
@@ -1523,7 +1531,7 @@
                 </div>
 
                 <div class="action-buttons">
-                    <button class="action-btn download-btn" id="downloadBtn">💾 Download</button>
+                    <button class="action-btn download-btn" id="downloadBtn">Download</button>
                 </div>
             </div>
         </div>
