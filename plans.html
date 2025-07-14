@@ -820,22 +820,17 @@
             }
         }
     </style>
-
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <div class="welcome-text">
-                <span>👋</span> Hi, <span id="userName">Loading...</span>
+                <span>👋</span> Hi, <span id="userName">Dinesh</span>
             </div>
             <div class="header-right">
                 <div class="plan-info">
                     <span class="plan-badge" id="planBadge">Free</span>
-                    <span class="searches-left" id="searchesLeft">Unlimited searches</span>
+                    <span class="searches-left" id="searchesLeft">3 searches left</span>
                 </div>
                 <button class="upgrade-btn" id="upgradeBtn">
                     Get Unlimited Searches
@@ -917,4 +912,14 @@
                 <!-- Yearly Plan -->
                 <div class="plan-card">
                     <h3 class="plan-name">Yearly</h3>
-                    <div class="plan-price">₹3,499
+                    <div class="plan-price">₹3,499</div>
+                    <div class="plan-duration">Per year</div>
+                    <ul class="plan-features">
+                        <li>Unlimited searches</li>
+                        <li>Interest direct download</li>
+                        <li>Priority support</li>
+                        <li>Yearly subscription</li>
+                        <li>Save 42% vs Monthly</li>
+                    </ul>
+                    <button class="plan-btn secondary" onclick="selectPlan('yearly')">Choose Yearly</button>
+                </div>
