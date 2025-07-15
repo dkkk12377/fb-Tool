@@ -1841,7 +1841,8 @@ function displayResults() {
             <input type="checkbox" class="checkbox" onclick="event.stopPropagation();" onchange="toggleInterestFromCheckbox(${index}, this.checked)">
         </div>
         <div>${index + 1}</div>
-        <div class="interest-name">${escapeHtml(interest.name)}</div>
+     <div class="interest-name">${escapeHtml(interest.name.replace(/\s*\(.*?\)\s*/g, '').trim())}</div>
+     
         <div>${formatAudienceSize(interest.audience_size_lower_bound, interest.audience_size_upper_bound)}</div>
         <div>${interest.topic || 'N/A'}</div>
     </div>
