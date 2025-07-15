@@ -1774,6 +1774,12 @@ async function searchInterests() {
         return;
     }
 
+// Clear previous selections and uncheck master toggle
+masterCheckbox.checked = false;
+selectedInterests = [];
+updateSelectedList();
+
+
     isLoading = true;
     exploreBtn.disabled = true;
     exploreBtn.innerHTML = '<div class="spinner"></div> Searching...';
