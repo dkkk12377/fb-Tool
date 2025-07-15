@@ -229,13 +229,19 @@
             margin: 0 auto;
         }
 
-       .plans-grid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 24px;
-    max-width: 100%;
+     .plans-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* center align */
+  gap: 24px;
+  max-width: 100%;
 }
+
+.plan-card {
+  width: 300px; /* fix size */
+  flex-shrink: 0;
+}
+
 
 .plan-card {
     width: 300px;
@@ -619,16 +625,17 @@
             margin: 0 auto;
         }
 
-      .plans-grid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 24px;
-    max-width: 100%;
+    .plans-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* center align */
+  gap: 24px;
+  max-width: 100%;
 }
 
 .plan-card {
-    width: 300px;
+  width: 300px; /* fix size */
+  flex-shrink: 0;
 }
 
 
