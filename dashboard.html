@@ -1971,7 +1971,8 @@ function updateSelectedList() {
 
     selectedList.innerHTML = selectedInterests.map(interest => `
         <div class="selected-item">
-            <span>${escapeHtml(interest.name)}</span>
+          <span>${escapeHtml(interest.name.replace(/\s*\(.*?\)\s*/g, '').trim())}</span>
+
             <button class="remove-btn" onclick="removeInterest('${interest.id}')">×</button>
         </div>
     `).join('');
@@ -2027,7 +2028,8 @@ function copySelected() {
         return;
     }
 
-    const text = selectedInterests.map(i => i.name).join(', ');
+   const text = selectedInterests.map(i => i.name.replace(/\s*\(.*?\)\s*/g, '').trim()).join(', ');
+
     navigator.clipboard.writeText(text).then(() => {
         showToast(`${selectedInterests.length} interests copied`);
     }).catch(() => {
