@@ -2045,7 +2045,8 @@ function downloadSelected() {
     }
 
     const keyword = searchInput.value.trim() || 'interests';
-    const content = `Total: ${selectedInterests.length} interests\n\n${selectedInterests.map((interest, index) => `${index + 1}. ${interest.name}`).join('\n')}\n\nCopy-ready:\n${selectedInterests.map(i => i.name).join(', ')}`;
+ const content = `Total: ${selectedInterests.length} interests\n\n${selectedInterests.map((interest, index) => `${index + 1}. ${interest.name.replace(/\s*\(.*?\)\s*/g, '').trim()}`).join('\n')}\n\nCopy-ready:\n${selectedInterests.map(i => i.name.replace(/\s*\(.*?\)\s*/g, '').trim()).join(', ')}`;
+
 
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
