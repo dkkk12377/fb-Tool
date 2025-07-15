@@ -869,7 +869,7 @@
             </div>
         </div>
 
-        <div class="plans-section">
+       <div class="plans-section" id="plansSection" style="display: none;"
             <div class="plans-header">
                 <h1 class="plans-title">Choose Your Plan</h1>
                 <p class="plans-subtitle">Select the perfect plan for your Facebook interest research needs. All plans include direct interest downloads and our powerful search engine.</p>
@@ -1040,27 +1040,11 @@ async function loadUserProfile(user) {
         if (userDoc.exists()) {
             const userData = userDoc.data();
             updatePlanDisplay(userData.currentPlan || 'free');
-            
-            // Update searches count if on free plan
-            if (userData.currentPlan === 'free' || !userData.currentPlan) {
-                const searchesUsed = userData.searchesUsed || 0;
-                const searchesRemaining = Math.max(0, 3 - searchesUsed);
-                searchesLeft.textContent = `${searchesRemaining}/3 searches`;
-            }
-        } else {
-            // Create user document if it doesn't exist
-            await updateDoc(userDocRef, {
-                name: user.displayName || 'User',
-                email: user.email,
-                currentPlan: 'free',
-                searchesUsed: 0,
-                lastSearchDate: new Date().toISOString().split('T')[0],
-                createdAt: new Date(),
-                updatedAt: new Date()
-            });
-            updatePlanDisplay('free');
-        }
 
+document.getElementById('plansSection').style.display = 'block';
+
+            
+            
         // Update profile image
         const profileImage = document.getElementById('profileImage');
         const profileInitial = document.getElementById('profileInitial');
