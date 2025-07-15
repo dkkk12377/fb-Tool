@@ -1072,145 +1072,57 @@ async function loadUserProfile(user) {
 }
 
 // Update plan display
-function updatePlanDisplay(plan) {
-    const planButtons = document.querySelectorAll('.plan-btn');
-    
-    // Reset all buttons
-    planButtons.forEach(btn => {
-        btn.classList.remove('current');
-        btn.classList.remove('primary');
-        btn.classList.add('secondary');
-        
-        // Reset button text
-        if (btn.textContent.includes('Current')) {
-            const originalText = btn.getAttribute('data-original-text') || 'Choose Plan';
-            btn.textContent = originalText;
+function updatePlanDisplay(currentPlan) {
+    const planRoutes = {
+        monthly: 'page1.html',
+        yearly: 'page2.html',
+        lifetime: 'page3.html'
+    };
+
+    const planOrder = ['free', 'monthly', 'yearly', 'lifetime'];
+    const currentIndex = planOrder.indexOf(currentPlan);
+
+    // Badge + search text
+    planBadge.textContent = currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1);
+    planBadge.className = 'plan-badge ' + currentPlan;
+    searchesLeft.textContent = currentPlan === 'free' ? '3/day searches' : 'Unlimited searches';
+
+    // Loop over all plan cards
+    document.querySelectorAll('.plan-card').forEach(card => {
+        const planName = card.querySelector('.plan-name').textContent.toLowerCase();
+        const button = card.querySelector('.plan-btn');
+        const planIndex = planOrder.indexOf(planName);
+
+        // Hide only older plans than current
+        if (planIndex < currentIndex) {
+            card.style.display = 'none';
+            return;
+        }
+
+        // Otherwise, show card
+        card.style.display = 'block';
+        button.disabled = false;
+        button.className = 'plan-btn';
+
+        if (planName === currentPlan) {
+            // Current plan
+            button.textContent = 'Current Plan';
+            button.classList.add('current');
+            button.disabled = true;
+        } else {
+            // Future plans
+            const label = currentPlan === 'free' ? 'Choose Plan' : 'Upgrade Plan';
+            button.textContent = label;
+            button.classList.add(planName === 'monthly' ? 'primary' : 'secondary');
+            button.onclick = () => {
+                if (planRoutes[planName]) {
+                    window.location.href = planRoutes[planName];
+                }
+            };
         }
     });
-
-    // Update based on current plan
-    switch(plan) {
-        case 'free':
-            planBadge.textContent = 'Free';
-            planBadge.className = 'plan-badge free';
-            const freePlanBtn = document.getElementById('freePlanBtn');
-            freePlanBtn.classList.add('current');
-            freePlanBtn.classList.remove('secondary');
-            freePlanBtn.textContent = 'Current Plan';
-            break;
-            
-        case 'monthly':
-            planBadge.textContent = 'Monthly';
-            planBadge.className = 'plan-badge monthly';
-            searchesLeft.textContent = 'Unlimited searches';
-            const monthlyBtn = document.querySelector('[onclick="selectPlan(\'monthly\')"]');
-            if (monthlyBtn) {
-                monthlyBtn.classList.add('current');
-                monthlyBtn.classList.remove('secondary');
-                monthlyBtn.textContent = 'Current Plan';
-            }
-            break;
-            
-        case 'yearly':
-            planBadge.textContent = 'Yearly';
-            planBadge.className = 'plan-badge yearly';
-            searchesLeft.textContent = 'Unlimited searches';
-            const yearlyBtn = document.querySelector('[onclick="selectPlan(\'yearly\')"]');
-            if (yearlyBtn) {
-                yearlyBtn.classList.add('current');
-                yearlyBtn.classList.remove('secondary');
-                yearlyBtn.textContent = 'Current Plan';
-            }
-            break;
-            
-        case 'lifetime':
-            planBadge.textContent = 'Lifetime';
-            planBadge.className = 'plan-badge lifetime';
-            searchesLeft.textContent = 'Unlimited searches';
-            const lifetimeBtn = document.querySelector('[onclick="selectPlan(\'lifetime\')"]');
-            if (lifetimeBtn) {
-                lifetimeBtn.classList.add('current');
-                lifetimeBtn.classList.remove('secondary');
-                lifetimeBtn.textContent = 'Current Plan';
-            }
-            break;
-    }
 }
 
-// Select plan function
-async function selectPlan(planType) {
-    const user = auth.currentUser;
-    if (!user) {
-        showToast('Please login first', 'error');
-        return;
-    }
-
-    try {
-        showToast('Preparing payment...', 'info');
-        
-        // In a real implementation, you would integrate with a payment gateway
-        // For now, we'll simulate the process
-        
-        // Update loading state
-        const buttons = document.querySelectorAll('.plan-btn');
-        buttons.forEach(btn => btn.disabled = true);
-        
-        // Simulate payment processing
-        setTimeout(async () => {
-            try {
-                // Update user's plan in Firestore
-                const userDocRef = doc(db, 'users', user.uid);
-                await updateDoc(userDocRef, {
-                    currentPlan: planType,
-                    planExpiry: getPlanExpiry(planType),
-                    updatedAt: new Date()
-                });
-                
-                // Update UI
-                updatePlanDisplay(planType);
-                showToast(`Successfully upgraded to ${planType} plan!`, 'success');
-                
-                // Re-enable buttons
-                buttons.forEach(btn => btn.disabled = false);
-                
-            } catch (error) {
-                console.error('Error updating plan:', error);
-                showToast('Error updating plan', 'error');
-                buttons.forEach(btn => btn.disabled = false);
-            }
-        }, 2000);
-        
-    } catch (error) {
-        console.error('Error selecting plan:', error);
-        showToast('Error processing request', 'error');
-    }
-}
-
-// Get plan expiry date
-function getPlanExpiry(planType) {
-    const now = new Date();
-    switch(planType) {
-        case 'monthly':
-            return new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
-        case 'yearly':
-            return new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
-        case 'lifetime':
-            return new Date(2099, 11, 31); // Far future date
-        default:
-            return null;
-    }
-}
-
-// Show toast notification
-function showToast(message, type = 'success') {
-    toast.textContent = message;
-    toast.className = `toast ${type}`;
-    toast.classList.add('show');
-    
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 3000);
-}
 
 // Logout function
 async function logout() {
