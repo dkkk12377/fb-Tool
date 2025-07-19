@@ -1544,6 +1544,7 @@ button:focus {
     <script type="module">
    // Firebase SDK
 // Firebase SDK
+// Firebase SDK
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -1567,6 +1568,7 @@ let userData = null;
 let allInterests = [];
 let selectedInterests = [];
 let isLoading = false;
+let serverTimeOffset = 0; // Server time से local time का difference
 
 const ACCESS_TOKEN = "EAAcSUOy3V3UBO2KQAqYBgtYgLJXhuJMZAyY60rtRsGvRdmoJJ0BBxUCGX7LvokO8R8ihqYrXoUOZCgBQxMufmu4CAvuwpnLV1nJC1KBiYd2gEvfpnQLw1uInLZCJWRs8Qx4e8Fx5EZCp0JNLCEDnStZB4fKS02gl8ZBqkuPAwhWDZBJqnkZCtxwCwqt0bXK0NPZC0";
 
@@ -1587,6 +1589,83 @@ const selectedList = document.getElementById('selectedList');
 const selectedCount = document.getElementById('selectedCount');
 const selectAllBtn = document.getElementById('selectAllBtn');
 const masterCheckbox = document.getElementById('masterCheckbox');
+const clearBtn = document.getElementById('clearBtn');
+const copyBtn = document.getElementById('copyBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const clearSelectedBtn = document.getElementById('clearSelectedBtn');
+const toast = document.getElementById('toast');
+
+// ✅ Real Server Time Functions
+async function getServerTime() {
+    try {
+        // Method 1: World Time API
+        const response = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
+        if (response.ok) {
+            const data = await response.json();
+            return new Date(data.datetime);
+        }
+        throw new Error('World Time API failed');
+    } catch (error) {
+        try {
+            // Method 2: Alternative time API
+            const response = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=UTC');
+            if (response.ok) {
+                const data = await response.json();
+                return new Date(data.dateTime);
+            }
+            throw new Error('Time API failed');
+        } catch (error2) {
+            console.warn('Both time APIs failed, using Firebase server timestamp as fallback');
+            // Method 3: Firebase server timestamp (requires a write operation)
+            return await getFirebaseServerTime();
+        }
+    }
+}
+
+async function getFirebaseServerTime() {
+    try {
+        // Create a temporary document with server timestamp
+        const tempRef = doc(db, "system", "serverTime");
+        await setDoc(tempRef, {
+            timestamp: serverTimestamp()
+        });
+        
+        // Read it back to get the server time
+        const tempSnap = await getDoc(tempRef);
+        if (tempSnap.exists()) {
+            const serverTime = tempSnap.data().timestamp;
+            return serverTime.toDate();
+        }
+    } catch (error) {
+        console.error('Firebase server time failed:', error);
+        // Last resort - use local time but warn user
+        console.warn('Using local time as final fallback');
+        return new Date();
+    }
+}
+
+// Calculate server time offset on app initialization
+async function initializeServerTime() {
+    try {
+        const serverTime = await getServerTime();
+        const localTime = new Date();
+        serverTimeOffset = serverTime.getTime() - localTime.getTime();
+        console.log(`Server time offset: ${serverTimeOffset}ms`);
+    } catch (error) {
+        console.error('Failed to initialize server time:', error);
+        serverTimeOffset = 0;
+    }
+}
+
+// Get current server time (adjusted for offset)
+function getCurrentServerTime() {
+    return new Date(Date.now() + serverTimeOffset);
+}
+
+// Get server date string for comparison
+function getServerDateString() {
+    return getCurrentServerTime().toDateString();
+}
 
 masterCheckbox.addEventListener('change', () => {
     const isChecked = masterCheckbox.checked;
@@ -1596,7 +1675,6 @@ masterCheckbox.addEventListener('change', () => {
         toggleInterestFromCheckbox(index, isChecked);
     });
 
-    // ✅ Add toast message
     if (isChecked) {
         showToast(`All ${allInterests.length} interests selected`);
     } else {
@@ -1604,17 +1682,11 @@ masterCheckbox.addEventListener('change', () => {
     }
 });
 
-
-const clearBtn = document.getElementById('clearBtn');
-const copyBtn = document.getElementById('copyBtn');
-const downloadBtn = document.getElementById('downloadBtn');
-const clearSelectedBtn = document.getElementById('clearSelectedBtn');
-const toast = document.getElementById('toast');
-
 // Auth state observer
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
+        await initializeServerTime(); // ✅ Initialize server time first
         await loadUserData();
         updateUI();
     } else {
@@ -1622,7 +1694,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// Load user data from Firestore
+// ✅ Updated Load user data with real server time
 async function loadUserData() {
     try {
         const userRef = doc(db, "users", currentUser.uid);
@@ -1631,9 +1703,9 @@ async function loadUserData() {
         if (userSnap.exists()) {
             userData = userSnap.data();
 
-            // प्लान expiry चेक करो
-            const now = new Date();
-            if (userData.planExpiry && new Date(userData.planExpiry.seconds * 1000) < now) {
+            // ✅ Plan expiry check with real server time
+            const serverNow = getCurrentServerTime();
+            if (userData.planExpiry && new Date(userData.planExpiry.seconds * 1000) < serverNow) {
                 userData.currentPlan = "free";
                 userData.planExpiry = null;
 
@@ -1642,27 +1714,32 @@ async function loadUserData() {
                     planExpiry: null,
                     updatedAt: serverTimestamp()
                 }, { merge: true });
+                
+                console.log('Plan expired, reset to free plan');
             }
 
-            // अगर नया दिन है तो searches reset करो
-            const today = new Date().toDateString();
-            if (userData.lastSearchDate !== today) {
+            // ✅ Daily search reset with server time
+            const serverToday = getServerDateString();
+            if (userData.lastSearchDate !== serverToday) {
                 userData.searchesUsed = 0;
-                userData.lastSearchDate = today;
+                userData.lastSearchDate = serverToday;
                 await setDoc(userRef, {
                     searchesUsed: 0,
-                    lastSearchDate: today,
+                    lastSearchDate: serverToday,
                     updatedAt: serverTimestamp()
                 }, { merge: true });
+                
+                console.log('New day detected, reset search count');
             }
         } else {
-            // Create default user data if doesn't exist
+            // Create default user data with server time
+            const serverToday = getServerDateString();
             userData = {
                 currentPlan: "free",
                 searchesUsed: 0,
-                lastSearchDate: new Date().toDateString(),
-                createdAt: new Date(),
-                updatedAt: new Date()
+                lastSearchDate: serverToday,
+                createdAt: getCurrentServerTime(),
+                updatedAt: getCurrentServerTime()
             };
             
             await setDoc(userRef, {
@@ -1685,10 +1762,10 @@ function updateUI() {
     const email = currentUser.email || 'Not Available';
     const photo = currentUser.photoURL;
 
-    // 👤 Header (left side greeting)
+    // Header (left side greeting)
     userName.textContent = displayName;
 
-    // 👤 Top-right profile initials or photo
+    // Top-right profile initials or photo
     if (photo) {
         profileImage.src = photo;
         profileImage.style.display = 'block';
@@ -1699,7 +1776,7 @@ function updateUI() {
         profileImage.style.display = 'none';
     }
 
-    // ✅ 🧠 🔥 FIX: Dropdown Profile Info (YOU MISSED THIS!)
+    // Dropdown Profile Info
     const dropdownName = document.getElementById('dropdownName');
     const dropdownEmail = document.getElementById('dropdownEmail');
     const dropdownProfileImage = document.getElementById('dropdownProfileImage');
@@ -1708,7 +1785,7 @@ function updateUI() {
     if (dropdownEmail) dropdownEmail.textContent = email;
     if (dropdownProfileImage && photo) dropdownProfileImage.src = photo;
 
-    // 🔁 Plan Info
+    // Plan Info
     const plan = userData.currentPlan || 'free';
     planBadge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
 
@@ -1725,7 +1802,6 @@ function updateUI() {
     }
 }
 
-
 // Check if user can perform search
 function canPerformSearch() {
     if (!userData) return false;
@@ -1738,7 +1814,7 @@ function canPerformSearch() {
     return used < maxSearches;
 }
 
-// Update search count
+// ✅ Updated search count with server time
 async function updateSearchCount() {
     if (!currentUser || !userData) return;
     
@@ -1751,7 +1827,7 @@ async function updateSearchCount() {
     const userRef = doc(db, "users", currentUser.uid);
     await setDoc(userRef, {
         searchesUsed: newCount,
-        lastSearchDate: new Date().toDateString(),
+        lastSearchDate: getServerDateString(), // ✅ Server time
         updatedAt: serverTimestamp()
     }, { merge: true });
     
@@ -1774,11 +1850,10 @@ async function searchInterests() {
         return;
     }
 
-// Clear previous selections and uncheck master toggle
-masterCheckbox.checked = false;
-selectedInterests = [];
-updateSelectedList();
-
+    // Clear previous selections and uncheck master toggle
+    masterCheckbox.checked = false;
+    selectedInterests = [];
+    updateSelectedList();
 
     isLoading = true;
     exploreBtn.disabled = true;
@@ -1815,7 +1890,7 @@ updateSelectedList();
     }
 }
 
-// Add this function before the displayResults function
+// Format audience size
 function formatAudienceSize(lowerBound, upperBound) {
     function formatNumber(num) {
         if (num >= 1000000) {
@@ -1832,7 +1907,7 @@ function formatAudienceSize(lowerBound, upperBound) {
     return `${lower} - ${upper}`;
 }
 
-// Replace the displayResults function with this updated version
+// Display results
 function displayResults() {
     resultsCount.textContent = `Search Results: ${allInterests.length}`;
     
@@ -1847,8 +1922,7 @@ function displayResults() {
             <input type="checkbox" class="checkbox" onclick="event.stopPropagation();" onchange="toggleInterestFromCheckbox(${index}, this.checked)">
         </div>
         <div>${index + 1}</div>
-     <div class="interest-name">${escapeHtml(interest.name.replace(/\s*\(.*?\)\s*/g, '').trim())}</div>
-     
+        <div class="interest-name">${escapeHtml(interest.name.replace(/\s*\(.*?\)\s*/g, '').trim())}</div>
         <div>${formatAudienceSize(interest.audience_size_lower_bound, interest.audience_size_upper_bound)}</div>
         <div>${interest.topic || 'N/A'}</div>
     </div>
@@ -1943,7 +2017,6 @@ function selectAll() {
 function updateSelectedList() {
     selectedCount.textContent = selectedInterests.length;
 
-    // ✅ Auto-toggle both checkboxes (master + toggle button)
     if (allInterests && allInterests.length > 0) {
         const allSelected = selectedInterests.length === allInterests.length;
 
@@ -1959,12 +2032,12 @@ function updateSelectedList() {
             }
         }
 
-        // ✅ Master checkbox sync (SL वाली)
+        // Master checkbox sync
         const masterCheckbox = document.getElementById('masterCheckbox');
         if (masterCheckbox) masterCheckbox.checked = allSelected;
     }
 
-    // ✅ Selected List rendering
+    // Selected List rendering
     if (selectedInterests.length === 0) {
         selectedList.innerHTML = `
             <div class="empty-state">
@@ -1978,7 +2051,6 @@ function updateSelectedList() {
     selectedList.innerHTML = selectedInterests.map(interest => `
         <div class="selected-item">
           <span>${escapeHtml(interest.name.replace(/\s*\(.*?\)\s*/g, '').trim())}</span>
-
             <button class="remove-btn" onclick="removeInterest('${interest.id}')">×</button>
         </div>
     `).join('');
@@ -2051,8 +2123,7 @@ function downloadSelected() {
     }
 
     const keyword = searchInput.value.trim() || 'interests';
- const content = `Total: ${selectedInterests.length} interests\n\n${selectedInterests.map((interest, index) => `${index + 1}. ${interest.name.replace(/\s*\(.*?\)\s*/g, '').trim()}`).join('\n')}\n\nCopy-ready:\n${selectedInterests.map(i => i.name.replace(/\s*\(.*?\)\s*/g, '').trim()).join(', ')}`;
-
+    const content = `Total: ${selectedInterests.length} interests\n\n${selectedInterests.map((interest, index) => `${index + 1}. ${interest.name.replace(/\s*\(.*?\)\s*/g, '').trim()}`).join('\n')}\n\nCopy-ready:\n${selectedInterests.map(i => i.name.replace(/\s*\(.*?\)\s*/g, '').trim()).join(', ')}`;
 
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -2088,21 +2159,18 @@ downloadBtn.addEventListener('click', downloadSelected);
 clearSelectedBtn.addEventListener('click', clearSelected);
 upgradeBtn.addEventListener('click', () => window.location.href = 'plans.html');
 
-
 // Profile click handler
-// ✅ Profile button click से dropdown toggle
 profileBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     dropdown.classList.toggle('show');
 });
 
-// ✅ बाहर click करने पर dropdown hide हो
+// बाहर click करने पर dropdown hide हो
 document.addEventListener('click', (e) => {
     if (!dropdown.contains(e.target) && !profileBtn.contains(e.target)) {
         dropdown.classList.remove('show');
     }
 });
-
 
 // Make functions globally accessible
 window.toggleInterestRow = toggleInterestRow;
@@ -2132,52 +2200,50 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize empty selected list
     updateSelectedList();
-const darkStyle = document.getElementById("darkStyle");
-const lightStyle = document.getElementById("lightStyle");
-const themeBtn = document.getElementById("themeToggleBtn");
-const themeIcon = document.getElementById("themeIcon");
+    
+    const darkStyle = document.getElementById("darkStyle");
+    const lightStyle = document.getElementById("lightStyle");
+    const themeBtn = document.getElementById("themeToggleBtn");
+    const themeIcon = document.getElementById("themeIcon");
 
-// Theme Setup
-const savedTheme = localStorage.getItem("theme");
+    // Theme Setup
+    const savedTheme = localStorage.getItem("theme");
 
-// If user has previously selected a theme
-if (savedTheme) {
-    if (savedTheme === "light") {
-        darkStyle.disabled = true;
-        lightStyle.disabled = false;
-        themeIcon.src = "moon.svg";
+    // If user has previously selected a theme
+    if (savedTheme) {
+        if (savedTheme === "light") {
+            darkStyle.disabled = true;
+            lightStyle.disabled = false;
+            themeIcon.src = "moon.svg";
+        } else {
+            darkStyle.disabled = false;
+            lightStyle.disabled = true;
+            themeIcon.src = "sun.svg";
+        }
     } else {
+        // Default to dark theme on first visit
         darkStyle.disabled = false;
         lightStyle.disabled = true;
         themeIcon.src = "sun.svg";
-    }
-} else {
-    // Default to dark theme on first visit
-    darkStyle.disabled = false;
-    lightStyle.disabled = true;
-    themeIcon.src = "sun.svg";
-    localStorage.setItem("theme", "dark");
-}
-
-
-themeBtn.addEventListener("click", () => {
-    const isCurrentlyDark = !darkStyle.disabled;
-
-    // Toggle theme styles
-    darkStyle.disabled = isCurrentlyDark;
-    lightStyle.disabled = !isCurrentlyDark;
-
-    // Update icon - IMPORTANT: always force set src
-    if (isCurrentlyDark) {
-        themeIcon.src = "moon.svg"; // Going to light, show moon icon
-        localStorage.setItem("theme", "light");
-    } else {
-        themeIcon.src = "sun.svg"; // Going to dark, show sun icon
         localStorage.setItem("theme", "dark");
     }
-});
 
+    themeBtn.addEventListener("click", () => {
+        const isCurrentlyDark = !darkStyle.disabled;
 
+        // Toggle theme styles
+        darkStyle.disabled = isCurrentlyDark;
+        lightStyle.disabled = !isCurrentlyDark;
+
+        // Update icon - IMPORTANT: always force set src
+        if (isCurrentlyDark) {
+            themeIcon.src = "moon.svg"; // Going to light, show moon icon
+            localStorage.setItem("theme", "light");
+        } else {
+            themeIcon.src = "sun.svg"; // Going to dark, show sun icon
+            localStorage.setItem("theme", "dark");
+        }
+    });
 });
 </script>
 </body>
