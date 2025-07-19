@@ -1545,6 +1545,7 @@ button:focus {
    // Firebase SDK
 // Firebase SDK
 // Firebase SDK
+// Firebase SDK
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -1568,7 +1569,8 @@ let userData = null;
 let allInterests = [];
 let selectedInterests = [];
 let isLoading = false;
-let serverTimeOffset = 0; // Server time से local time का difference
+let serverTimeOffset = 0;
+let serverTimeInitialized = false;
 
 const ACCESS_TOKEN = "EAAcSUOy3V3UBO2KQAqYBgtYgLJXhuJMZAyY60rtRsGvRdmoJJ0BBxUCGX7LvokO8R8ihqYrXoUOZCgBQxMufmu4CAvuwpnLV1nJC1KBiYd2gEvfpnQLw1uInLZCJWRs8Qx4e8Fx5EZCp0JNLCEDnStZB4fKS02gl8ZBqkuPAwhWDZBJqnkZCtxwCwqt0bXK0NPZC0";
 
@@ -1595,76 +1597,62 @@ const downloadBtn = document.getElementById('downloadBtn');
 const clearSelectedBtn = document.getElementById('clearSelectedBtn');
 const toast = document.getElementById('toast');
 
-// ✅ Real Server Time Functions
-async function getServerTime() {
+// ⚡ Fast Server Time Functions
+async function getServerTimeQuick() {
     try {
-        // Method 1: World Time API
-        const response = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
+        // Only use the fastest API with 3 second timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+        const response = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC', {
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
         if (response.ok) {
             const data = await response.json();
             return new Date(data.datetime);
         }
-        throw new Error('World Time API failed');
+        throw new Error('API response not ok');
     } catch (error) {
-        try {
-            // Method 2: Alternative time API
-            const response = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=UTC');
-            if (response.ok) {
-                const data = await response.json();
-                return new Date(data.dateTime);
-            }
-            throw new Error('Time API failed');
-        } catch (error2) {
-            console.warn('Both time APIs failed, using Firebase server timestamp as fallback');
-            // Method 3: Firebase server timestamp (requires a write operation)
-            return await getFirebaseServerTime();
-        }
+        console.warn('Quick server time failed, using local time with warning');
+        return new Date(); // Fallback to local time immediately
     }
 }
 
-async function getFirebaseServerTime() {
+// ⚡ Initialize server time in background (non-blocking)
+async function initializeServerTimeBackground() {
+    if (serverTimeInitialized) return;
+    
     try {
-        // Create a temporary document with server timestamp
-        const tempRef = doc(db, "system", "serverTime");
-        await setDoc(tempRef, {
-            timestamp: serverTimestamp()
-        });
-        
-        // Read it back to get the server time
-        const tempSnap = await getDoc(tempRef);
-        if (tempSnap.exists()) {
-            const serverTime = tempSnap.data().timestamp;
-            return serverTime.toDate();
-        }
-    } catch (error) {
-        console.error('Firebase server time failed:', error);
-        // Last resort - use local time but warn user
-        console.warn('Using local time as final fallback');
-        return new Date();
-    }
-}
-
-// Calculate server time offset on app initialization
-async function initializeServerTime() {
-    try {
-        const serverTime = await getServerTime();
+        const serverTime = await getServerTimeQuick();
         const localTime = new Date();
         serverTimeOffset = serverTime.getTime() - localTime.getTime();
+        serverTimeInitialized = true;
         console.log(`Server time offset: ${serverTimeOffset}ms`);
+        
+        // Re-check user data if offset is significant (more than 1 hour)
+        if (Math.abs(serverTimeOffset) > 3600000 && userData) {
+            await loadUserData();
+            updateUI();
+        }
     } catch (error) {
-        console.error('Failed to initialize server time:', error);
-        serverTimeOffset = 0;
+        console.error('Background server time sync failed:', error);
+        serverTimeInitialized = true; // Mark as initialized to prevent retries
     }
 }
 
-// Get current server time (adjusted for offset)
-function getCurrentServerTime() {
-    return new Date(Date.now() + serverTimeOffset);
+// Get current time (use server time if available, otherwise local time)
+function getCurrentTime() {
+    if (serverTimeInitialized && serverTimeOffset !== 0) {
+        return new Date(Date.now() + serverTimeOffset);
+    }
+    return new Date();
 }
 
-// Get server date string for comparison
-function getServerDateString() {
-    return getCurrentServerTime().toDateString();
+// Get date string for comparison
+function getDateString() {
+    return getCurrentTime().toDateString();
 }
 
 masterCheckbox.addEventListener('change', () => {
@@ -1682,19 +1670,23 @@ masterCheckbox.addEventListener('change', () => {
     }
 });
 
-// Auth state observer
+// ⚡ Fast Auth state observer
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
-        await initializeServerTime(); // ✅ Initialize server time first
+        
+        // Load user data immediately without waiting for server time
         await loadUserData();
         updateUI();
+        
+        // Initialize server time in background (non-blocking)
+        initializeServerTimeBackground();
     } else {
         window.location.href = 'index.html';
     }
 });
 
-// ✅ Updated Load user data with real server time
+// ⚡ Optimized Load user data
 async function loadUserData() {
     try {
         const userRef = doc(db, "users", currentUser.uid);
@@ -1703,50 +1695,54 @@ async function loadUserData() {
         if (userSnap.exists()) {
             userData = userSnap.data();
 
-            // ✅ Plan expiry check with real server time
-            const serverNow = getCurrentServerTime();
-            if (userData.planExpiry && new Date(userData.planExpiry.seconds * 1000) < serverNow) {
+            // Plan expiry check (use available time)
+            const currentTime = getCurrentTime();
+            if (userData.planExpiry && new Date(userData.planExpiry.seconds * 1000) < currentTime) {
                 userData.currentPlan = "free";
                 userData.planExpiry = null;
 
-                await setDoc(userRef, {
+                // Update in background without awaiting
+                setDoc(userRef, {
                     currentPlan: "free",
                     planExpiry: null,
                     updatedAt: serverTimestamp()
-                }, { merge: true });
+                }, { merge: true }).catch(console.error);
                 
                 console.log('Plan expired, reset to free plan');
             }
 
-            // ✅ Daily search reset with server time
-            const serverToday = getServerDateString();
-            if (userData.lastSearchDate !== serverToday) {
+            // Daily search reset check
+            const today = getDateString();
+            if (userData.lastSearchDate !== today) {
                 userData.searchesUsed = 0;
-                userData.lastSearchDate = serverToday;
-                await setDoc(userRef, {
+                userData.lastSearchDate = today;
+                
+                // Update in background without awaiting
+                setDoc(userRef, {
                     searchesUsed: 0,
-                    lastSearchDate: serverToday,
+                    lastSearchDate: today,
                     updatedAt: serverTimestamp()
-                }, { merge: true });
+                }, { merge: true }).catch(console.error);
                 
                 console.log('New day detected, reset search count');
             }
         } else {
-            // Create default user data with server time
-            const serverToday = getServerDateString();
+            // Create default user data
+            const today = getDateString();
             userData = {
                 currentPlan: "free",
                 searchesUsed: 0,
-                lastSearchDate: serverToday,
-                createdAt: getCurrentServerTime(),
-                updatedAt: getCurrentServerTime()
+                lastSearchDate: today,
+                createdAt: getCurrentTime(),
+                updatedAt: getCurrentTime()
             };
             
-            await setDoc(userRef, {
+            // Create in background without awaiting
+            setDoc(userRef, {
                 ...userData,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
-            });
+            }).catch(console.error);
         }
     } catch (error) {
         console.error("Error loading user data:", error);
@@ -1814,7 +1810,7 @@ function canPerformSearch() {
     return used < maxSearches;
 }
 
-// ✅ Updated search count with server time
+// Update search count (non-blocking)
 async function updateSearchCount() {
     if (!currentUser || !userData) return;
     
@@ -1824,14 +1820,16 @@ async function updateSearchCount() {
     const newCount = (userData.searchesUsed || 0) + 1;
     userData.searchesUsed = newCount;
     
-    const userRef = doc(db, "users", currentUser.uid);
-    await setDoc(userRef, {
-        searchesUsed: newCount,
-        lastSearchDate: getServerDateString(), // ✅ Server time
-        updatedAt: serverTimestamp()
-    }, { merge: true });
-    
+    // Update UI immediately
     updateUI();
+    
+    // Update database in background
+    const userRef = doc(db, "users", currentUser.uid);
+    setDoc(userRef, {
+        searchesUsed: newCount,
+        lastSearchDate: getDateString(),
+        updatedAt: serverTimestamp()
+    }, { merge: true }).catch(console.error);
 }
 
 // Search interests function
@@ -1877,7 +1875,7 @@ async function searchInterests() {
         }
 
         allInterests = allData;
-        await updateSearchCount();
+        updateSearchCount(); // Non-blocking
         displayResults();
         
     } catch (error) {
