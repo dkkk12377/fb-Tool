@@ -1540,46 +1540,69 @@ button:focus {
     <div class="toast" id="toast"></div>
 
 
-    <!-- Firebase SDK -->
-    <script type="module">
-   // Firebase SDK
-// Firebase SDK
-// Firebase SDK
-// Firebase SDK
-// --- Firebase SDK ---
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  <script type="module">
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
-// -- Configurations
+import {
+  getAuth,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// ✅ Firebase Config
 const firebaseConfig = {
-    apiKey: "AIzaSyB-wOqU0JnvWM3Nt91xhac2x_qO5a54GMQ",
-    authDomain: "dinesh-3b413.firebaseapp.com",
-    projectId: "dinesh-3b413",
-    storageBucket: "dinesh-3b413.appspot.com",
-    messagingSenderId: "1053189064237",
-    appId: "1:1053189064237:web:d261dbebb5e7299e829aa4",
-    measurementId: "G-FPVH4NC1ML"
+  apiKey: "AIzaSyB-wOqU0JnvWM3Nt91xhac2x_qO5a54GMQ",
+  authDomain: "dinesh-3b413.firebaseapp.com",
+  projectId: "dinesh-3b413",
+  storageBucket: "dinesh-3b413.appspot.com",
+  messagingSenderId: "1053189064237",
+  appId: "1:1053189064237:web:d261dbebb5e7299e829aa4",
+  measurementId: "G-FPVH4NC1ML"
 };
+
+// ✅ Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth();
 const db = getFirestore();
 
-// --- SERVER TIME: सिर्फ timeapi.io ---
-async function getRealTime() {
-    try {
-        const res = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=Asia/Kolkata');
-        if (!res.ok) throw new Error('Network response not OK');
-        const data = await res.json();
-        // जब भी टाइम चाहिए, server का timestamp - user local कभी नहीं
-        return new Date(data.dateTime);
-    } catch (error) {
-        console.error("Real time fetch error:", error);
-        return null; // local fallback बंद
-    }
+// ✅ Global real server time
+let realTimeGlobal = null;
+
+// ✅ Get server time from Firestore document
+async function updateAndFetchServerTime() {
+  try {
+    const timeRef = doc(db, "getcurrenttime", "now");
+    await setDoc(timeRef, { serverTime: serverTimestamp() }, { merge: true });
+
+    const snap = await getDoc(timeRef);
+    if (!snap.exists()) throw new Error("Time doc missing");
+    const time = snap.data().serverTime?.toDate();
+    return time;
+  } catch (err) {
+    console.error("Time fetch error:", err);
+    return null;
+  }
 }
 
-// --- DOM Elements ---
+let currentUser = null;
+let userData = null;
+let allInterests = [];
+let selectedInterests = [];
+let isLoading = false;
+
+const ACCESS_TOKEN = "EAAcSUOy3V3UBO2KQAqYBgtYgLJXhuJMZAyY60rtRsGvRdmoJJ0BBxUCGX7LvokO8R8ihqYrXoUOZCgBQxMufmu4CAvuwpnLV1nJC1KBiYd2gEvfpnQLw1uInLZCJWRs8Qx4e8Fx5EZCp0JNLCEDnStZB4fKS02gl8ZBqkuPAwhWDZBJqnkZCtxwCwqt0bXK0NPZC0";
+
+// DOM element selectors (as before)
 const userName = document.getElementById('userName');
 const planBadge = document.getElementById('planBadge');
 const searchesLeft = document.getElementById('searchesLeft');
@@ -1602,170 +1625,119 @@ const downloadBtn = document.getElementById('downloadBtn');
 const clearSelectedBtn = document.getElementById('clearSelectedBtn');
 const toast = document.getElementById('toast');
 
-// --- State Variables ---
-let currentUser = null;
-let userData = null;
-let allInterests = [];
-let selectedInterests = [];
-let isLoading = false;
-const ACCESS_TOKEN = "EAAcSUOy3V3UBO2KQAqYBgtYgLJXhuJMZAyY60rtRsGvRdmoJJ0BBxUCGX7LvokO8R8ihqYrXoUOZCgBQxMufmu4CAvuwpnLV1nJC1KBiYd2gEvfpnQLw1uInLZCJWRs8Qx4e8Fx5EZCp0JNLCEDnStZB4fKS02gl8ZBqkuPAwhWDZBJqnkZCtxwCwqt0bXK0NPZC0";
+// ✅ Start your app after realTime fetch
+document.addEventListener("DOMContentLoaded", async () => {
+  realTimeGlobal = await updateAndFetchServerTime();
 
-// --- Master Checkbox ---
-masterCheckbox.addEventListener('change', () => {
-    const isChecked = masterCheckbox.checked;
-    document.querySelectorAll('.table-row .checkbox').forEach((cb, index) => {
-        cb.checked = isChecked;
-        toggleInterestFromCheckbox(index, isChecked);
-    });
-    if (isChecked) showToast(`All ${allInterests.length} interests selected`);
-    else showToast(`Selection cleared`);
-});
+  if (!realTimeGlobal) {
+    alert("Time fetch failed");
+    return;
+  }
 
-// --- Auth State ---
-onAuthStateChanged(auth, async (user) => {
+  onAuthStateChanged(auth, async (user) => {
     if (user) {
-        currentUser = user;
-        await loadUserData();
-        updateUI();
+      currentUser = user;
+      await loadUserData(); // ✅ Uses realTimeGlobal
+      updateUI();
     } else {
-        window.location.href = 'index.html';
+      window.location.href = 'index.html';
     }
+  });
 });
 
-// --- User Data With Real Server Time ---
+// ✅ Get user data & adjust with realTimeGlobal
 async function loadUserData() {
-    try {
-        const userRef = doc(db, "users", currentUser.uid);
-        const userSnap = await getDoc(userRef);
+  try {
+    const userRef = doc(db, "users", currentUser.uid);
+    const userSnap = await getDoc(userRef);
+    const now = realTimeGlobal;
+    const todayStr = now.toDateString();
 
-        // --- Real Time सर्वर से ---
-        const realTime = await getRealTime();
-        if (!realTime) throw new Error("Cannot fetch server time");
+    if (userSnap.exists()) {
+      userData = userSnap.data();
 
-        const today = realTime.toDateString();
+      if (userData.planExpiry && new Date(userData.planExpiry.seconds * 1000) < now) {
+        userData.currentPlan = "free";
+        userData.planExpiry = null;
+        await setDoc(userRef, {
+          currentPlan: "free",
+          planExpiry: null,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      }
 
-        if (userSnap.exists()) {
-            userData = userSnap.data();
-            if (userData.planExpiry && (new Date(userData.planExpiry.seconds * 1000) < realTime)) {
-                userData.currentPlan = "free";
-                userData.planExpiry = null;
-                await setDoc(userRef, {
-                    currentPlan: "free",
-                    planExpiry: null,
-                    updatedAt: serverTimestamp()
-                }, { merge: true });
-            }
-            if (userData.lastSearchDate !== today) {
-                userData.searchesUsed = 0;
-                userData.lastSearchDate = today;
-                await setDoc(userRef, {
-                    searchesUsed: 0,
-                    lastSearchDate: today,
-                    updatedAt: serverTimestamp()
-                }, { merge: true });
-            }
-        } else {
-            userData = {
-                currentPlan: "free",
-                searchesUsed: 0,
-                lastSearchDate: today,
-                createdAt: realTime,
-                updatedAt: realTime
-            };
-            await setDoc(userRef, {
-                ...userData,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
-            });
-        }
-    } catch (error) {
-        console.error("Error loading user data:", error);
-        showToast('Error loading user data', 'error');
-    }
-}
+      if (userData.lastSearchDate !== todayStr) {
+        userData.searchesUsed = 0;
+        userData.lastSearchDate = todayStr;
+        await setDoc(userRef, {
+          searchesUsed: 0,
+          lastSearchDate: todayStr,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      }
 
-// --- UI Update ---
-function updateUI() {
-    if (!currentUser || !userData) return;
-    const displayName = currentUser.displayName || 'User';
-    const email = currentUser.email || 'Not Available';
-    const photo = currentUser.photoURL;
-    userName.textContent = displayName;
-
-    if (photo) {
-        profileImage.src = photo;
-        profileImage.style.display = 'block';
-        profileInitial.style.display = 'none';
     } else {
-        profileInitial.textContent = displayName.charAt(0).toUpperCase();
-        profileInitial.style.display = 'block';
-        profileImage.style.display = 'none';
+      userData = {
+        currentPlan: "free",
+        searchesUsed: 0,
+        lastSearchDate: todayStr,
+        createdAt: now,
+        updatedAt: now
+      };
+      await setDoc(userRef, {
+        ...userData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
     }
-    const dropdownName = document.getElementById('dropdownName');
-    const dropdownEmail = document.getElementById('dropdownEmail');
-    const dropdownProfileImage = document.getElementById('dropdownProfileImage');
-    if (dropdownName) dropdownName.textContent = displayName;
-    if (dropdownEmail) dropdownEmail.textContent = email;
-    if (dropdownProfileImage && photo) dropdownProfileImage.src = photo;
-    const plan = userData.currentPlan || 'free';
-    planBadge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
-
-    if (plan === 'free') {
-        const maxSearches = 3;
-        const used = userData.searchesUsed || 0;
-        const remaining = Math.max(0, maxSearches - used);
-        searchesLeft.textContent = `${remaining}/${maxSearches} searches`;
-        upgradeBtn.style.display = 'flex';
-        searchesLeft.style.color = remaining === 0 ? '#e74c3c' : '#2ecc71';
-    } else {
-        searchesLeft.textContent = 'Unlimited searches';
-        upgradeBtn.style.display = 'none';
-    }
+  } catch (error) {
+    console.error("Error loading user data:", error);
+    showToast('Error loading user data', 'error');
+  }
 }
-
-// --- SEARCH LIMIT LOGIC ---
-function canPerformSearch() {
-    if (!userData) return false;
-    const plan = userData.currentPlan || 'free';
-    if (plan === 'monthly') return true;
-    const maxSearches = 3;
-    const used = userData.searchesUsed || 0;
-    return used < maxSearches;
-}
+// ✅ Update search count with server time
 async function updateSearchCount() {
     if (!currentUser || !userData) return;
+
     const plan = userData.currentPlan || 'free';
     if (plan === 'monthly') return;
+
     const newCount = (userData.searchesUsed || 0) + 1;
     userData.searchesUsed = newCount;
-    const realTime = await getRealTime();
+
     const userRef = doc(db, "users", currentUser.uid);
     await setDoc(userRef, {
         searchesUsed: newCount,
-        lastSearchDate: realTime ? realTime.toDateString() : "",
+        lastSearchDate: realTimeGlobal.toDateString(),
         updatedAt: serverTimestamp()
     }, { merge: true });
+
     updateUI();
 }
 
-// --- SEARCH INTERESTS with Real API Time ---
+// ✅ Search Interests using Facebook API
 async function searchInterests() {
     if (isLoading) return;
+
     const query = searchInput.value.trim();
     if (!query) {
         showToast('Please enter a search term', 'error');
         return;
     }
-    const realTime = await getRealTime();
-    if (!realTime) {
-        showToast("Failed to fetch real server time", "error");
+
+    await loadUserData(); // make sure we have fresh user data
+
+    const plan = (userData.currentPlan || 'free').toLowerCase();
+    if (plan === 'free' && !canPerformSearch()) {
+        window.location.href = 'limitexist.html';
         return;
     }
-    const currentDate = realTime.toDateString();
-    await loadUserData();
+
+    const currentDate = realTimeGlobal.toDateString();
     if (userData.lastSearchDate !== currentDate) {
         userData.searchesUsed = 0;
         userData.lastSearchDate = currentDate;
+
         const userRef = doc(db, "users", currentUser.uid);
         await setDoc(userRef, {
             searchesUsed: 0,
@@ -1773,30 +1745,34 @@ async function searchInterests() {
             updatedAt: serverTimestamp()
         }, { merge: true });
     }
-    const plan = (userData.currentPlan || 'free').toLowerCase();
-    if (plan === 'free' && !canPerformSearch()) {
-        window.location.href = 'limitexist.html';
-        return;
-    }
+
     masterCheckbox.checked = false;
     selectedInterests = [];
     updateSelectedList();
     isLoading = true;
     exploreBtn.disabled = true;
     exploreBtn.innerHTML = '<div class="spinner"></div> Searching...';
+
     try {
         let allData = [];
         let nextUrl = `https://graph.facebook.com/v19.0/search?type=adinterest&q=${encodeURIComponent(query)}&limit=500&access_token=${ACCESS_TOKEN}`;
+
         while (nextUrl && allData.length < 1000) {
             const response = await fetch(nextUrl);
             const data = await response.json();
-            if (data.error) throw new Error(data.error.message);
+
+            if (data.error) {
+                throw new Error(data.error.message);
+            }
+
             allData = [...allData, ...(data.data || [])];
             nextUrl = data.paging && data.paging.next ? data.paging.next : null;
         }
+
         allInterests = allData;
         await updateSearchCount();
         displayResults();
+
     } catch (error) {
         console.error('Search error:', error);
         showToast('Search failed. Please try again.', 'error');
@@ -1807,71 +1783,182 @@ async function searchInterests() {
     }
 }
 
-// --- Rest Is As You Provided ---
-// (interest management, copy, download, toast, theme toggle, etc.)
-// केवल टाइम से जुड़ी logic बदली गई है, बाकी fully compatible
-
-// ------ Interest Selection & UI -------
-function formatAudienceSize(lowerBound, upperBound) {
-    function formatNumber(num) {
-        if (num >= 1000000) return (num / 1000000).toFixed(0) + 'M';
-        else if (num >= 1000) return (num / 1000).toFixed(0) + 'K';
-        return num.toString();
-    }
-    const lower = formatNumber(lowerBound || 0);
-    const upper = formatNumber(upperBound || 0);
-    return `${lower} - ${upper}`;
+// ✅ Display search results
+function formatAudienceSize(lower, upper) {
+    const f = n => n >= 1e6 ? `${(n/1e6).toFixed(0)}M` : n >= 1e3 ? `${(n/1e3).toFixed(0)}K` : n;
+    return `${f(lower || 0)} - ${f(upper || 0)}`;
 }
+
 function displayResults() {
     resultsCount.textContent = `Search Results: ${allInterests.length}`;
-    if (allInterests.length === 0) {
-        resultsBody.innerHTML = '<div class="empty-state"><h3>No results found</h3><p>Try different keywords</p></div>';
-        return;
+    if (!allInterests.length)
+        return resultsBody.innerHTML = `<div class='empty-state'><h3>No results found</h3><p>Try different keywords</p></div>`;
+
+    resultsBody.innerHTML = allInterests.map((item, i) => `
+        <div class="table-row" data-index="${i}" onclick="toggleInterestRow(${i})" style="cursor:pointer">
+            <div><input type="checkbox" class="checkbox" onclick="event.stopPropagation();" onchange="toggleInterestFromCheckbox(${i}, this.checked)"></div>
+            <div>${i + 1}</div>
+            <div class="interest-name">${escapeHtml(item.name.replace(/\s*\(.*?\)\s*/g, '').trim())}</div>
+            <div>${formatAudienceSize(item.audience_size_lower_bound, item.audience_size_upper_bound)}</div>
+            <div>${item.topic || 'N/A'}</div>
+        </div>`).join('');
+}
+
+function escapeHtml(txt) { const el = document.createElement("div"); el.textContent = txt; return el.innerHTML; }
+
+function toggleInterestRow(i) {
+    if (i < 0 || i >= allInterests.length) return;
+    const row = document.querySelector(`[data-index="${i}"]`);
+    const checkbox = row.querySelector('.checkbox');
+    checkbox.checked = !checkbox.checked;
+    toggleInterestFromCheckbox(i, checkbox.checked);
+}
+
+function toggleInterestFromCheckbox(i, checked) {
+    const interest = allInterests[i];
+    if (checked) {
+        if (!selectedInterests.some(s => s.id === interest.id)) {
+            selectedInterests.push(interest);
+        }
+    } else {
+        selectedInterests = selectedInterests.filter(s => s.id !== interest.id);
     }
-    resultsBody.innerHTML = allInterests.map((interest, index) => `
-    <div class="table-row" data-index="${index}" onclick="toggleInterestRow(${index})" style="cursor: pointer;">
-        <div>
-            <input type="checkbox" class="checkbox" onclick="event.stopPropagation();" onchange="toggleInterestFromCheckbox(${index}, this.checked)">
-        </div>
-        <div>${index + 1}</div>
-        <div class="interest-name">${escapeHtml(interest.name.replace(/\s*\(.*?\)\s*/g, '').trim())}</div>
-        <div>${formatAudienceSize(interest.audience_size_lower_bound, interest.audience_size_upper_bound)}</div>
-        <div>${interest.topic || 'N/A'}</div>
-    </div>
-    `).join('');
+    updateSelectedList();
+    showToast(`${interest.name} ${checked ? 'selected' : 'removed'}`);
 }
 
-// --- Interest Toggle, Clear, Copy, Download, etc. (unchanged) ---
+function updateSelectedList() {
+    selectedCount.textContent = selectedInterests.length;
+    const allSelected = selectedInterests.length === allInterests.length;
+    if (masterCheckbox) masterCheckbox.checked = allSelected;
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    if (!selectedInterests.length) {
+        return selectedList.innerHTML = `<div class="empty-state"><h4>No interests selected</h4><p>Select interests from the left to see them here</p></div>`;
+    }
+
+    selectedList.innerHTML = selectedInterests.map(item => `
+        <div class="selected-item">
+            <span>${escapeHtml(item.name.replace(/\s*\(.*?\)\s*/g, '').trim())}</span>
+            <button class="remove-btn" onclick="removeInterest('${item.id}')">×</button>
+        </div>`).join('');
 }
-function toggleInterestRow(index) {/* ... unchanged ... */}
-function toggleInterestFromCheckbox(index, isChecked) {/* ... unchanged ... */}
-function selectAll() {/* ... unchanged ... */}
-function updateSelectedList() {/* ... unchanged ... */}
-function removeInterest(interestId) {/* ... unchanged ... */}
-function clearSelection() {/* ... unchanged ... */}
-function clearSelected() {/* ... unchanged ... */}
-function copySelected() {/* ... unchanged ... */}
-function downloadSelected() {/* ... unchanged ... */}
-function showToast(message, type = 'success') {/* ... unchanged ... */}
 
-// --- Main Event Listeners (unchanged) ---
+function removeInterest(id) {
+    selectedInterests = selectedInterests.filter(i => i.id !== id);
+    const i = allInterests.findIndex(it => it.id === id);
+    if (i !== -1) {
+        const cb = document.querySelector(`[data-index="${i}"] .checkbox`);
+        if (cb) cb.checked = false;
+    }
+    updateSelectedList();
+}
+
+function selectAll() {
+    if (!allInterests.length) return showToast('No interests found to select', 'error');
+    allInterests.forEach((i, idx) => {
+        const cb = document.querySelector(`[data-index="${idx}"] .checkbox`);
+        if (cb) cb.checked = true;
+    });
+    selectedInterests = [...allInterests];
+    updateSelectedList();
+    showToast(`All ${allInterests.length} interests selected`);
+}
+
+function clearSelected() {
+    selectedInterests = [];
+    document.querySelectorAll('.checkbox').forEach(cb => cb.checked = false);
+    updateSelectedList();
+    showToast('Selected interests cleared');
+}
+
+function copySelected() {
+    if (!selectedInterests.length) return showToast('No interests to copy', 'error');
+    const text = selectedInterests.map(i => i.name.replace(/\s*\(.*?\)\s*/g, '').trim()).join(', ');
+    navigator.clipboard.writeText(text).then(() => showToast(`${selectedInterests.length} interests copied`));
+}
+
+function downloadSelected() {
+    if (!selectedInterests.length) return showToast('No interests selected to download', 'error');
+    const keyword = searchInput.value.trim() || 'interests';
+    const text = selectedInterests.map((i, idx) => `${idx + 1}. ${i.name.replace(/\s*\(.*?\)\s*/g, '').trim()}`).join('\n');
+    const copyReady = selectedInterests.map(i => i.name.replace(/\s*\(.*?\)\s*/g, '').trim()).join(', ');
+    const blob = new Blob([`Total: ${selectedInterests.length} interests\n\n${text}\n\nCopy-ready:\n${copyReady}`], { type: 'text/plain' });
+
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${keyword}_interests.txt`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('Downloaded successfully');
+}
+
+function clearSelection() {
+    selectedInterests = [];
+    document.querySelectorAll('.checkbox').forEach(cb => cb.checked = false);
+    updateSelectedList();
+}
+
+function showToast(txt, type = 'success') {
+    toast.textContent = txt;
+    toast.className = `toast ${type}`;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// Events
 exploreBtn.addEventListener('click', searchInterests);
-searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') searchInterests(); });
+searchInput.addEventListener('keypress', e => {
+    if (e.key === 'Enter') searchInterests();
+});
 selectAllBtn.addEventListener('click', selectAll);
 clearBtn.addEventListener('click', clearSelection);
 copyBtn.addEventListener('click', copySelected);
 downloadBtn.addEventListener('click', downloadSelected);
 clearSelectedBtn.addEventListener('click', clearSelected);
 upgradeBtn.addEventListener('click', () => window.location.href = 'plans.html');
-profileBtn.addEventListener('click', (e) => { e.stopPropagation(); dropdown.classList.toggle('show'); });
-document.addEventListener('click', (e) => {
+profileBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    dropdown.classList.toggle('show');
+});
+document.addEventListener('click', e => {
     if (!dropdown.contains(e.target) && !profileBtn.contains(e.target)) dropdown.classList.remove('show');
 });
+
+// Logout function
+window.logout = async () => {
+    try {
+        await signOut(auth);
+        window.location.href = 'index.html';
+    } catch (e) {
+        showToast('Logout failed', 'error');
+    }
+};
+
+// Theme handling (unchanged)
+const darkStyle = document.getElementById("darkStyle");
+const lightStyle = document.getElementById("lightStyle");
+const themeBtn = document.getElementById("themeToggleBtn");
+const themeIcon = document.getElementById("themeIcon");
+
+const savedTheme = localStorage.getItem("theme");
+if (savedTheme === "light") {
+    darkStyle.disabled = true;
+    lightStyle.disabled = false;
+    themeIcon.src = "moon.svg";
+} else {
+    darkStyle.disabled = false;
+    lightStyle.disabled = true;
+    themeIcon.src = "sun.svg";
+}
+
+themeBtn.addEventListener("click", () => {
+    const isDark = !darkStyle.disabled;
+    darkStyle.disabled = isDark;
+    lightStyle.disabled = !isDark;
+    themeIcon.src = isDark ? "moon.svg" : "sun.svg";
+    localStorage.setItem("theme", isDark ? "light" : "dark");
+});
+
 window.toggleInterestRow = toggleInterestRow;
 window.toggleInterestFromCheckbox = toggleInterestFromCheckbox;
 window.removeInterest = removeInterest;
@@ -1880,59 +1967,11 @@ window.clearSelected = clearSelected;
 window.copySelected = copySelected;
 window.downloadSelected = downloadSelected;
 window.selectAll = selectAll;
-window.logout = async function() {
-    try {
-        await signOut(auth);
-        window.location.href = 'index.html';
-    } catch (error) {
-        console.error('Logout error:', error);
-        showToast('Logout failed', 'error');
-    }
-};
-
-// --- THEME CODE (exactly as before) ---
-document.addEventListener('DOMContentLoaded', () => {
-    searchInput.focus();
-    updateSelectedList();
-
-    const darkStyle = document.getElementById("darkStyle");
-    const lightStyle = document.getElementById("lightStyle");
-    const themeBtn = document.getElementById("themeToggleBtn");
-    const themeIcon = document.getElementById("themeIcon");
-
-    const savedTheme = localStorage.getItem("theme");
-
-    if (savedTheme) {
-        if (savedTheme === "light") {
-            darkStyle.disabled = true;
-            lightStyle.disabled = false;
-            themeIcon.src = "moon.svg";
-        } else {
-            darkStyle.disabled = false;
-            lightStyle.disabled = true;
-            themeIcon.src = "sun.svg";
-        }
-    } else {
-        darkStyle.disabled = false;
-        lightStyle.disabled = true;
-        themeIcon.src = "sun.svg";
-        localStorage.setItem("theme", "dark");
-    }
-
-    themeBtn.addEventListener("click", () => {
-        const isCurrentlyDark = !darkStyle.disabled;
-        darkStyle.disabled = isCurrentlyDark;
-        lightStyle.disabled = !isCurrentlyDark;
-        if (isCurrentlyDark) {
-            themeIcon.src = "moon.svg";
-            localStorage.setItem("theme", "light");
-        } else {
-            themeIcon.src = "sun.svg";
-            localStorage.setItem("theme", "dark");
-        }
-    });
-});
-
 </script>
+
+
+
+
+
 </body>
 </html>
