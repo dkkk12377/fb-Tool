@@ -1541,9 +1541,7 @@ button:focus {
 
 
     <!-- Firebase SDK -->
-    <script type="module">
-   // Firebase SDK
-// F
+   <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -1554,666 +1552,239 @@ const firebaseConfig = {
     projectId: "dinesh-3b413",
     storageBucket: "dinesh-3b413.appspot.com",
     messagingSenderId: "1053189064237",
-    appId: "1:1053189064237:web:d261dbebb5e7299e829aa4",
-    measurementId: "G-FPVH4NC1ML"
+    appId: "1:1053189064237:web:d261dbebb5e7299e829aa4"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth();
 const db = getFirestore();
 
+let currentUser = null;
+let userData = null;
+let allInterests = [];
+let selectedInterests = [];
+let isLoading = false;
+
+const ACCESS_TOKEN = "YOUR_FACEBOOK_GRAPH_API_TOKEN"; // ← अपना सही token डालें
+
+// ✅ Real time API (timeapi.io)
 class TimeManager {
     constructor() {
         this.apiUrl = 'https://timeapi.io/api/Time/current/zone?timeZone=Asia/Kolkata';
-        this.cache = null;
-        this.offset = null;
+        this.offset = 0;
         this.lastSync = 0;
         this.CACHE_DURATION = 2 * 60 * 1000;
     }
 
     async getTime() {
         const now = Date.now();
-        if (this.cache && now - this.lastSync < this.CACHE_DURATION) {
+        if (now - this.lastSync < this.CACHE_DURATION && this.offset !== null) {
             return new Date(now + this.offset);
         }
         try {
-            const serverTime = await this.fetchTime();
+            const res = await fetch(this.apiUrl, { headers: { Accept: 'application/json' } });
+            const data = await res.json();
+            const serverTime = new Date(data.dateTime);
             this.offset = serverTime.getTime() - now;
-            this.cache = serverTime;
-            this.lastSync = now;
+            this.lastSync = Date.now();
             return serverTime;
         } catch {
-            return new Date(now + (this.offset || 0));
+            return new Date(now + (this.offset || 0)); // fallback
         }
     }
-
-    async fetchTime() {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 1500);
-        const res = await fetch(this.apiUrl, {
-            signal: controller.signal,
-            headers: { 'Accept': 'application/json' }
-        });
-        clearTimeout(timeoutId);
-        const data = await res.json();
-        if (!data.dateTime) throw new Error('Invalid response');
-        return new Date(data.dateTime);
-    }
 }
-
 const timeManager = new TimeManager();
-
 async function getRealTime() {
     return await timeManager.getTime();
-
-}
-}
 }
 
-// 🔽 YOUR REMAINING EXISTING LOGIC COMES HERE (onAuthStateChanged, UI updates etc.)
-// Replace all old calls to superFastTimeManager or multiTimeAPI with getRealTime()
+// DOM Elements
+const userName = document.getElementById("userName");
+const userEmail = document.getElementById("userEmail");
+const userPlan = document.getElementById("userPlan");
+const searchesLeft = document.getElementById("searchesLeft");
+const interestInput = document.getElementById("interestInput");
+const searchBtn = document.getElementById("searchBtn");
+const interestTableBody = document.getElementById("interestTableBody");
+const selectedList = document.getElementById("selectedList");
+const copyBtn = document.getElementById("copyBtn");
+const downloadBtn = document.getElementById("downloadBtn");
+const toast = document.getElementById("toast");
+const logoutBtn = document.getElementById("logoutBtn");
 
-
-// DOM elements
-const userName = document.getElementById('userName');
-const planBadge = document.getElementById('planBadge');
-const searchesLeft = document.getElementById('searchesLeft');
-const upgradeBtn = document.getElementById('upgradeBtn');
-const profileBtn = document.getElementById('profileBtn');
-const profileImage = document.getElementById('profileImage');
-const profileInitial = document.getElementById('profileInitial');
-const dropdown = document.getElementById('dropdown');
-const searchInput = document.getElementById('searchInput');
-const exploreBtn = document.getElementById('exploreBtn');
-const resultsCount = document.getElementById('resultsCount');
-const resultsBody = document.getElementById('resultsBody');
-const selectedList = document.getElementById('selectedList');
-const selectedCount = document.getElementById('selectedCount');
-const selectAllBtn = document.getElementById('selectAllBtn');
-const masterCheckbox = document.getElementById('masterCheckbox');
-
-masterCheckbox.addEventListener('change', () => {
-    const isChecked = masterCheckbox.checked;
-
-    document.querySelectorAll('.table-row .checkbox').forEach((cb, index) => {
-        cb.checked = isChecked;
-        toggleInterestFromCheckbox(index, isChecked);
-    });
-
-    if (isChecked) {
-        showToast(`All ${allInterests.length} interests selected`);
-    } else {
-        showToast(`Selection cleared`);
-    }
-});
-
-const clearBtn = document.getElementById('clearBtn');
-const copyBtn = document.getElementById('copyBtn');
-const downloadBtn = document.getElementById('downloadBtn');
-const clearSelectedBtn = document.getElementById('clearSelectedBtn');
-const toast = document.getElementById('toast');
-
-// Auth state observer
+// 🚀 Firebase auth listener
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
         await loadUserData();
         updateUI();
     } else {
-        window.location.href = 'index.html';
+        window.location.href = "index.html";
     }
 });
 
-// ✅ UPDATED: Load user data with real server time
 async function loadUserData() {
-    try {
-        const userRef = doc(db, "users", currentUser.uid);
-        const userSnap = await getDoc(userRef);
-
-        if (userSnap.exists()) {
-            userData = userSnap.data();
-
-            // ✅ Real server time से check करें
-            const realTime = await getRealTime();
-            const today = realTime.toDateString();
-
-            // Plan expiry check with real time
-            if (userData.planExpiry && new Date(userData.planExpiry.seconds * 1000) < realTime) {
-                userData.currentPlan = "free";
-                userData.planExpiry = null;
-
-                await setDoc(userRef, {
-                    currentPlan: "free",
-                    planExpiry: null,
-                    updatedAt: serverTimestamp()
-                }, { merge: true });
-            }
-
-            // Daily search reset with real date
-            if (userData.lastSearchDate !== today) {
-                userData.searchesUsed = 0;
-                userData.lastSearchDate = today;
-                await setDoc(userRef, {
-                    searchesUsed: 0,
-                    lastSearchDate: today,
-                    updatedAt: serverTimestamp()
-                }, { merge: true });
-            }
-        } else {
-            // ✅ Create default user data with real time
-            const realTime = await getRealTime();
-            userData = {
-                currentPlan: "free",
-                searchesUsed: 0,
-                lastSearchDate: realTime.toDateString(),
-                createdAt: realTime,
-                updatedAt: realTime
-            };
-            
-            await setDoc(userRef, {
-                ...userData,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
-            });
-        }
-    } catch (error) {
-        console.error("Error loading user data:", error);
-        showToast('Error loading user data', 'error');
-    }
-}
-
-// Update UI with user data
-function updateUI() {
-    if (!currentUser || !userData) return;
-
-    const displayName = currentUser.displayName || 'User';
-    const email = currentUser.email || 'Not Available';
-    const photo = currentUser.photoURL;
-
-    userName.textContent = displayName;
-
-    if (photo) {
-        profileImage.src = photo;
-        profileImage.style.display = 'block';
-        profileInitial.style.display = 'none';
-    } else {
-        profileInitial.textContent = displayName.charAt(0).toUpperCase();
-        profileInitial.style.display = 'block';
-        profileImage.style.display = 'none';
-    }
-
-    const dropdownName = document.getElementById('dropdownName');
-    const dropdownEmail = document.getElementById('dropdownEmail');
-    const dropdownProfileImage = document.getElementById('dropdownProfileImage');
-
-    if (dropdownName) dropdownName.textContent = displayName;
-    if (dropdownEmail) dropdownEmail.textContent = email;
-    if (dropdownProfileImage && photo) dropdownProfileImage.src = photo;
-
-    const plan = userData.currentPlan || 'free';
-    planBadge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
-
-    if (plan === 'free') {
-        const maxSearches = 3;
-        const used = userData.searchesUsed || 0;
-        const remaining = Math.max(0, maxSearches - used);
-        searchesLeft.textContent = `${remaining}/${maxSearches} searches`;
-        upgradeBtn.style.display = 'flex';
-        searchesLeft.style.color = remaining === 0 ? '#e74c3c' : '#2ecc71';
-    } else {
-        searchesLeft.textContent = 'Unlimited searches';
-        upgradeBtn.style.display = 'none';
-    }
-}
-
-// Check if user can perform search
-function canPerformSearch() {
-    if (!userData) return false;
-    
-    const plan = userData.currentPlan || 'free';
-    if (plan === 'monthly') return true;
-    
-    const maxSearches = 3;
-    const used = userData.searchesUsed || 0;
-    return used < maxSearches;
-}
-
-// ✅ UPDATED: Update search count with real time
-async function updateSearchCount() {
-    if (!currentUser || !userData) return;
-    
-    const plan = userData.currentPlan || 'free';
-    if (plan === 'monthly') return;
-    
-    const newCount = (userData.searchesUsed || 0) + 1;
-    userData.searchesUsed = newCount;
-    
-    const realTime = await getRealTime();
     const userRef = doc(db, "users", currentUser.uid);
-    await setDoc(userRef, {
-        searchesUsed: newCount,
-        lastSearchDate: realTime.toDateString(),
-        updatedAt: serverTimestamp()
-    }, { merge: true });
-    
-    updateUI();
+    const userSnap = await getDoc(userRef);
+    const realTime = await getRealTime();
+    const today = realTime.toDateString();
+
+    if (userSnap.exists()) {
+        userData = userSnap.data();
+
+        if (userData.planExpiry && new Date(userData.planExpiry.seconds * 1000) < realTime) {
+            userData.currentPlan = "free";
+            userData.planExpiry = null;
+            await setDoc(userRef, { currentPlan: "free", planExpiry: null, updatedAt: serverTimestamp() }, { merge: true });
+        }
+
+        if (userData.lastSearchDate !== today) {
+            userData.searchesUsed = 0;
+            userData.lastSearchDate = today;
+            await setDoc(userRef, { searchesUsed: 0, lastSearchDate: today, updatedAt: serverTimestamp() }, { merge: true });
+        }
+    } else {
+        userData = {
+            currentPlan: "free",
+            searchesUsed: 0,
+            lastSearchDate: today,
+            createdAt: realTime,
+            updatedAt: realTime
+        };
+        await setDoc(userRef, { ...userData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    }
 }
 
-// ✅ UPDATED: Search interests with real time validation
+function updateUI() {
+    userName.textContent = currentUser.displayName || "User";
+    userEmail.textContent = currentUser.email;
+    userPlan.textContent = userData.currentPlan;
+    updateSearchCount();
+}
+
+function updateSearchCount() {
+    const limit = userData.currentPlan === "premium" ? 50 : 10;
+    searchesLeft.textContent = `${userData.searchesUsed}/${limit}`;
+}
+
 async function searchInterests() {
     if (isLoading) return;
-    
-    const query = searchInput.value.trim();
-    if (!query) {
-        showToast('Please enter a search term', 'error');
-        return;
-    }
+    const searchTerm = interestInput.value.trim();
+    if (searchTerm === "") return showToast("Search term cannot be empty!");
 
-    // ✅ Real time से validation
-    const realTime = await getRealTime();
-    const currentDate = realTime.toDateString();
-    
-    // Database से latest data fetch करें
-    await loadUserData();
-    
-    // Date mismatch check
-    if (userData.lastSearchDate !== currentDate) {
-        userData.searchesUsed = 0;
-        userData.lastSearchDate = currentDate;
-        
-        const userRef = doc(db, "users", currentUser.uid);
-        await setDoc(userRef, {
-            searchesUsed: 0,
-            lastSearchDate: currentDate,
-            updatedAt: serverTimestamp()
-        }, { merge: true });
-    }
+    const searchLimit = userData.currentPlan === "premium" ? 50 : 10;
 
-    const plan = (userData.currentPlan || 'free').toLowerCase();
-    if (plan === 'free' && !canPerformSearch()) {
-        window.location.href = 'limitexist.html';
-        return;
+    if (userData.searchesUsed >= searchLimit) {
+        return showToast("Search limit reached");
     }
-
-    masterCheckbox.checked = false;
-    selectedInterests = [];
-    updateSelectedList();
 
     isLoading = true;
-    exploreBtn.disabled = true;
-    exploreBtn.innerHTML = '<div class="spinner"></div> Searching...';
-    
+    showToast("Searching...", "info");
+
     try {
-        let allData = [];
-        let nextUrl = `https://graph.facebook.com/v19.0/search?type=adinterest&q=${encodeURIComponent(query)}&limit=500&access_token=${ACCESS_TOKEN}`;
-        
-        while (nextUrl && allData.length < 1000) {
-            const response = await fetch(nextUrl);
-            const data = await response.json();
-            
-            if (data.error) {
-                throw new Error(data.error.message);
-            }
+        const response = await fetch(`https://graph.facebook.com/search?type=adinterest&q=[${encodeURIComponent(searchTerm)}]&limit=200&access_token=${ACCESS_TOKEN}`);
+        const data = await response.json();
 
-            allData = [...allData, ...(data.data || [])];
-            nextUrl = data.paging && data.paging.next ? data.paging.next : null;
-        }
+        if (!data || !data.data) throw new Error("Invalid response from Facebook");
 
-        allInterests = allData;
-        await updateSearchCount();
-        displayResults();
-        
+        allInterests = data.data;
+        userData.searchesUsed += 1;
+
+        const userRef = doc(db, "users", currentUser.uid);
+        await setDoc(userRef, { searchesUsed: userData.searchesUsed, updatedAt: serverTimestamp() }, { merge: true });
+
+        updateSearchCount();
+        renderInterestTable();
+        showToast("Search complete!", "success");
     } catch (error) {
-        console.error('Search error:', error);
-        showToast('Search failed. Please try again.', 'error');
-    } finally {
-        isLoading = false;
-        exploreBtn.disabled = false;
-        exploreBtn.innerHTML = 'Search';
-    }
-}
-
-// Format audience size function
-function formatAudienceSize(lowerBound, upperBound) {
-    function formatNumber(num) {
-        if (num >= 1000000) {
-            return (num / 1000000).toFixed(0) + 'M';
-        } else if (num >= 1000) {
-            return (num / 1000).toFixed(0) + 'K';
-        }
-        return num.toString();
-    }
-    
-    const lower = formatNumber(lowerBound || 0);
-    const upper = formatNumber(upperBound || 0);
-    
-    return `${lower} - ${upper}`;
-}
-
-// Display results function
-function displayResults() {
-    resultsCount.textContent = `Search Results: ${allInterests.length}`;
-    
-    if (allInterests.length === 0) {
-        resultsBody.innerHTML = '<div class="empty-state"><h3>No results found</h3><p>Try different keywords</p></div>';
-        return;
+        console.error(error);
+        showToast("Search failed!", "error");
     }
 
-    resultsBody.innerHTML = allInterests.map((interest, index) => `
-    <div class="table-row" data-index="${index}" onclick="toggleInterestRow(${index})" style="cursor: pointer;">
-        <div>
-            <input type="checkbox" class="checkbox" onclick="event.stopPropagation();" onchange="toggleInterestFromCheckbox(${index}, this.checked)">
-        </div>
-        <div>${index + 1}</div>
-        <div class="interest-name">${escapeHtml(interest.name.replace(/\s*\(.*?\)\s*/g, '').trim())}</div>
-        <div>${formatAudienceSize(interest.audience_size_lower_bound, interest.audience_size_upper_bound)}</div>
-        <div>${interest.topic || 'N/A'}</div>
-    </div>
-`).join('');
+    isLoading = false;
 }
 
-// Utility function to escape HTML
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// Toggle interest when row is clicked
-function toggleInterestRow(index) {
-    try {
-        if (index < 0 || index >= allInterests.length) {
-            console.error('Invalid index:', index);
-            return;
-        }
-
-        const interest = allInterests[index];
-        const row = document.querySelector(`[data-index="${index}"]`);
-        if (!row) {
-            console.error('Row not found for index:', index);
-            return;
-        }
-
-        const checkbox = row.querySelector('.checkbox');
-        if (!checkbox) {
-            console.error('Checkbox not found for index:', index);
-            return;
-        }
-        
-        checkbox.checked = !checkbox.checked;
-        toggleInterestFromCheckbox(index, checkbox.checked);
-        
-    } catch (error) {
-        console.error('Toggle interest row error:', error);
-        showToast('Error selecting interest', 'error');
-    }
-}
-
-// Toggle interest from checkbox
-function toggleInterestFromCheckbox(index, isChecked) {
-    try {
-        if (index < 0 || index >= allInterests.length) {
-            console.error('Invalid index:', index);
-            return;
-        }
-
-        const interest = allInterests[index];
-        
-        if (isChecked) {
-            const alreadyExists = selectedInterests.some(item => item.id === interest.id);
-            if (!alreadyExists) {
-                selectedInterests.push(interest);
-            }
-        } else {
-            selectedInterests = selectedInterests.filter(item => item.id !== interest.id);
-        }
-
-        updateSelectedList();
-        showToast(`${interest.name} ${isChecked ? 'selected' : 'removed'}`);
-    } catch (error) {
-        console.error('Toggle interest from checkbox error:', error);
-        showToast('Error selecting interest', 'error');
-    }
-}
-
-// Select all interests
-function selectAll() {
-    if (!allInterests || allInterests.length === 0) {
-        showToast('No interests found to select', 'error');
-        return;
-    }
-
-    const checkboxes = document.querySelectorAll('.checkbox');
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = true;
-    });
-
-    selectedInterests = allInterests.map(i => ({ ...i }));
-    updateSelectedList();
-    showToast(`All ${allInterests.length} interests selected`);
-}
-
-// Update selected list
-function updateSelectedList() {
-    selectedCount.textContent = selectedInterests.length;
-
-    if (allInterests && allInterests.length > 0) {
-        const allSelected = selectedInterests.length === allInterests.length;
-
-        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-        const selectAllToggle = document.getElementById('selectAllToggle');
-        if (selectAllCheckbox) selectAllCheckbox.checked = allSelected;
-        if (selectAllToggle) {
-            if (allSelected) {
-                selectAllToggle.classList.add('active');
-            } else {
-                selectAllToggle.classList.remove('active');
-            }
-        }
-
-        const masterCheckbox = document.getElementById('masterCheckbox');
-        if (masterCheckbox) masterCheckbox.checked = allSelected;
-    }
-
-    if (selectedInterests.length === 0) {
-        selectedList.innerHTML = `
-            <div class="empty-state">
-                <h4>No interests selected</h4>
-                <p>Select interests from the left to see them here</p>
-            </div>
+function renderInterestTable() {
+    interestTableBody.innerHTML = "";
+    allInterests.forEach((item) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td><input type="checkbox" onchange="handleCheckboxChange(this, '${item.name.replace(/'/g, "\\'")}')"></td>
+            <td>${item.name}</td>
+            <td>${item.audience_size}</td>
+            <td>${item.topic || "—"}</td>
         `;
-        return;
-    }
-
-    selectedList.innerHTML = selectedInterests.map(interest => `
-        <div class="selected-item">
-            <span>${escapeHtml(interest.name.replace(/\s*\(.*?\)\s*/g, '').trim())}</span>
-            <button class="remove-btn" onclick="removeInterest('${interest.id}')">×</button>
-        </div>
-    `).join('');
-}
-
-// Remove interest
-function removeInterest(interestId) {
-    try {
-        const interest = selectedInterests.find(item => item.id === interestId);
-        selectedInterests = selectedInterests.filter(item => item.id !== interestId);
-
-        const interestIndex = allInterests.findIndex(item => item.id === interestId);
-        if (interestIndex !== -1) {
-            const row = document.querySelector(`[data-index="${interestIndex}"]`);
-            if (row) {
-                const checkbox = row.querySelector('.checkbox');
-                if (checkbox) {
-                    checkbox.checked = false;
-                }
-            }
-        }
-
-        updateSelectedList();
-        showToast(`${interest?.name || 'Interest'} removed`);
-    } catch (error) {
-        console.error('Remove interest error:', error);
-        showToast('Error removing interest', 'error');
-    }
-}
-
-// Clear selection
-function clearSelection() {
-    const checkboxes = document.querySelectorAll('.checkbox');
-    checkboxes.forEach(cb => cb.checked = false);
-    selectedInterests = [];
-    updateSelectedList();
-    showToast('All selections cleared');
-}
-
-// Clear selected interests
-function clearSelected() {
-    selectedInterests = [];
-    document.querySelectorAll('.checkbox').forEach(cb => cb.checked = false);
-    updateSelectedList();
-    showToast('Selected interests cleared');
-}
-
-// Copy selected interests
-function copySelected() {
-    if (selectedInterests.length === 0) {
-        showToast('No interests to copy', 'error');
-        return;
-    }
-
-    const text = selectedInterests.map(i => i.name.replace(/\s*\(.*?\)\s*/g, '').trim()).join(', ');
-
-    navigator.clipboard.writeText(text).then(() => {
-        showToast(`${selectedInterests.length} interests copied`);
-    }).catch(() => {
-        showToast('Copy failed', 'error');
+        interestTableBody.appendChild(row);
     });
 }
 
-// Download selected interests
-function downloadSelected() {
-    if (selectedInterests.length === 0) {
-        showToast('No interests selected to download', 'error');
-        return;
+window.handleCheckboxChange = function (checkbox, interestName) {
+    if (checkbox.checked) {
+        if (!selectedInterests.includes(interestName)) selectedInterests.push(interestName);
+    } else {
+        selectedInterests = selectedInterests.filter((i) => i !== interestName);
     }
+    updateSelectedList();
+};
 
-    const keyword = searchInput.value.trim() || 'interests';
-    const content = `Total: ${selectedInterests.length} interests\n\n${selectedInterests.map((interest, index) => `${index + 1}. ${interest.name.replace(/\s*\(.*?\)\s*/g, '').trim()}`).join('\n')}\n\nCopy-ready:\n${selectedInterests.map(i => i.name.replace(/\s*\(.*?\)\s*/g, '').trim()).join(', ')}`;
-
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${keyword}_interests.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-
-    showToast('Downloaded successfully');
+function updateSelectedList() {
+    selectedList.innerHTML = "";
+    selectedInterests.forEach((name) => {
+        const li = document.createElement("li");
+        li.textContent = name;
+        const del = document.createElement("button");
+        del.textContent = "❌";
+        del.onclick = () => removeInterest(name);
+        li.appendChild(del);
+        selectedList.appendChild(li);
+    });
 }
 
-// Show toast notification
-function showToast(message, type = 'success') {
-    toast.textContent = message;
-    toast.className = `toast ${type === 'error' ? 'error' : 'success'}`;
-    toast.classList.add('show');
+function removeInterest(name) {
+    selectedInterests = selectedInterests.filter((i) => i !== name);
+    updateSelectedList();
+}
 
+function copySelected() {
+    if (selectedInterests.length === 0) return;
+    const text = selectedInterests.join(", ");
+    navigator.clipboard.writeText(text);
+    showToast("Copied to clipboard!", "success");
+}
+
+function downloadSelected() {
+    if (selectedInterests.length === 0) return;
+    const text = selectedInterests.join("\n");
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "selected_interests.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast("Download started!", "success");
+}
+
+function showToast(message, type = "info") {
+    toast.textContent = message;
+    toast.className = `toast ${type}`;
+    toast.style.display = "block";
     setTimeout(() => {
-        toast.classList.remove('show');
+        toast.style.display = "none";
     }, 3000);
 }
 
-// Event listeners
-exploreBtn.addEventListener('click', searchInterests);
-searchInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') searchInterests();
+// 🔘 Event Listeners
+searchBtn.addEventListener("click", searchInterests);
+copyBtn.addEventListener("click", copySelected);
+downloadBtn.addEventListener("click", downloadSelected);
+logoutBtn.addEventListener("click", async () => {
+    await signOut(auth);
+    window.location.href = "index.html";
 });
-selectAllBtn.addEventListener('click', selectAll);
-clearBtn.addEventListener('click', clearSelection);
-copyBtn.addEventListener('click', copySelected);
-downloadBtn.addEventListener('click', downloadSelected);
-clearSelectedBtn.addEventListener('click', clearSelected);
-upgradeBtn.addEventListener('click', () => window.location.href = 'plans.html');
-
-// Profile click handler
-profileBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    dropdown.classList.toggle('show');
-});
-
-document.addEventListener('click', (e) => {
-    if (!dropdown.contains(e.target) && !profileBtn.contains(e.target)) {
-        dropdown.classList.remove('show');
-    }
-});
-
-// Make functions globally accessible
-window.toggleInterestRow = toggleInterestRow;
-window.toggleInterestFromCheckbox = toggleInterestFromCheckbox;
-window.removeInterest = removeInterest;
-window.clearSelection = clearSelection;
-window.clearSelected = clearSelected;
-window.copySelected = copySelected;
-window.downloadSelected = downloadSelected;
-window.selectAll = selectAll;
-
-// Logout function
-window.logout = async function() {
-    try {
-        await signOut(auth);
-        window.location.href = 'index.html';
-    } catch (error) {
-        console.error('Logout error:', error);
-        showToast('Logout failed', 'error');
-    }
-};
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
-    searchInput.focus();
-    updateSelectedList();
-
-    const darkStyle = document.getElementById("darkStyle");
-    const lightStyle = document.getElementById("lightStyle");
-    const themeBtn = document.getElementById("themeToggleBtn");
-    const themeIcon = document.getElementById("themeIcon");
-
-    // Theme Setup
-    const savedTheme = localStorage.getItem("theme");
-
-    if (savedTheme) {
-        if (savedTheme === "light") {
-            darkStyle.disabled = true;
-            lightStyle.disabled = false;
-            themeIcon.src = "moon.svg";
-        } else {
-            darkStyle.disabled = false;
-            lightStyle.disabled = true;
-            themeIcon.src = "sun.svg";
-        }
-    } else {
-        darkStyle.disabled = false;
-        lightStyle.disabled = true;
-        themeIcon.src = "sun.svg";
-        localStorage.setItem("theme", "dark");
-    }
-
-    themeBtn.addEventListener("click", () => {
-        const isCurrentlyDark = !darkStyle.disabled;
-
-        darkStyle.disabled = isCurrentlyDark;
-        lightStyle.disabled = !isCurrentlyDark;
-
-        if (isCurrentlyDark) {
-            themeIcon.src = "moon.svg";
-            localStorage.setItem("theme", "light");
-        } else {
-            themeIcon.src = "sun.svg";
-            localStorage.setItem("theme", "dark");
-        }
-    });
-});
-
 </script>
+
 </body>
 </html>
