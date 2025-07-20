@@ -1573,7 +1573,7 @@ let serverNowDateStr = null;
 
 const ACCESS_TOKEN = "EAAcSUOy3V3UBO2KQAqYBgtYgLJXhuJMZAyY60rtRsGvRdmoJJ0BBxUCGX7LvokO8R8ihqYrXoUOZCgBQxMufmu4CAvuwpnLV1nJC1KBiYd2gEvfpnQLw1uInLZCJWRs8Qx4e8Fx5EZCp0JNLCEDnStZB4fKS02gl8ZBqkuPAwhWDZBJqnkZCtxwCwqt0bXK0NPZC0";
 
-// DOM elements (no change)
+// DOM elements
 const userName = document.getElementById('userName');
 const planBadge = document.getElementById('planBadge');
 const searchesLeft = document.getElementById('searchesLeft');
@@ -1590,12 +1590,19 @@ const selectedList = document.getElementById('selectedList');
 const selectedCount = document.getElementById('selectedCount');
 const selectAllBtn = document.getElementById('selectAllBtn');
 const masterCheckbox = document.getElementById('masterCheckbox');
+const clearBtn = document.getElementById('clearBtn');
+const copyBtn = document.getElementById('copyBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const clearSelectedBtn = document.getElementById('clearSelectedBtn');
+const toast = document.getElementById('toast');
 
 // --- Server time utilities ---
-
 function getDateString(ts) {
-    if (!ts) return null;
-    return new Date(ts.seconds * 1000).toISOString().slice(0,10);
+    // Extra robust: typeof check so null/undefined/string don't break
+    if (!ts || typeof ts.seconds !== "number") return null;
+    try {
+        return new Date(ts.seconds * 1000).toISOString().slice(0, 10);
+    } catch { return null; }
 }
 
 // Always call before any logic needing 'now'
@@ -1603,7 +1610,7 @@ async function updateServerTimeCache() {
     const tempRef = doc(db, "getcurrenttime", "now");
     await setDoc(tempRef, { realtime: serverTimestamp() });
     const tempSnap = await getDoc(tempRef);
-    if (!tempSnap.exists()) throw new Error('Server time unavailable');
+    if (!tempSnap.exists() || !tempSnap.data().realtime) throw new Error('Server time unavailable');
     serverNowTimestamp = tempSnap.data().realtime;
     serverNowDateStr = getDateString(serverNowTimestamp);
 }
@@ -1612,32 +1619,27 @@ async function updateServerTimeCache() {
 
 masterCheckbox.addEventListener('change', () => {
     const isChecked = masterCheckbox.checked;
-
     document.querySelectorAll('.table-row .checkbox').forEach((cb, index) => {
         cb.checked = isChecked;
         toggleInterestFromCheckbox(index, isChecked);
     });
-
-    if (isChecked) {
-        showToast(`All ${allInterests.length} interests selected`);
-    } else {
-        showToast(`Selection cleared`);
-    }
+    showToast(isChecked
+        ? `All ${allInterests.length} interests selected`
+        : `Selection cleared`);
 });
-
-const clearBtn = document.getElementById('clearBtn');
-const copyBtn = document.getElementById('copyBtn');
-const downloadBtn = document.getElementById('downloadBtn');
-const clearSelectedBtn = document.getElementById('clearSelectedBtn');
-const toast = document.getElementById('toast');
 
 // Auth state observer
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
-        await updateServerTimeCache();
-        await loadUserData();
-        updateUI();
+        try {
+            await updateServerTimeCache();
+            await loadUserData();
+            updateUI();
+        } catch (err) {
+            console.error('Error on Firestore time/user load:', err);
+            showToast('Cannot load user data. Check your login and permissions.', 'error');
+        }
     } else {
         window.location.href = 'index.html';
     }
@@ -1653,29 +1655,33 @@ async function loadUserData() {
             userData = userSnap.data();
 
             // Plan expiry check (server date only)
-            if (userData.planExpiry) {
-                const expiryDateStr = getDateString(userData.planExpiry);
-                if (expiryDateStr && expiryDateStr < serverNowDateStr) {
-                    userData.currentPlan = "free";
-                    userData.planExpiry = null;
-
-                    await setDoc(userRef, {
-                        currentPlan: "free",
-                        planExpiry: null,
-                        updatedAt: serverTimestamp()
-                    }, { merge: true });
-                }
+            const expiryDateStr = getDateString(userData.planExpiry);
+            if (expiryDateStr && expiryDateStr < serverNowDateStr) {
+                userData.currentPlan = "free";
+                userData.planExpiry = null;
+                await setDoc(userRef, {
+                    currentPlan: "free",
+                    planExpiry: null,
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
             }
 
             // Daily search reset logic (server date only)
             const lastSearchDateStr = getDateString(userData.lastSearchDate);
-            if (lastSearchDateStr !== serverNowDateStr) {
+            if (lastSearchDateStr && lastSearchDateStr !== serverNowDateStr) {
                 userData.searchesUsed = 0;
                 userData.lastSearchDate = serverNowTimestamp;
                 await setDoc(userRef, {
                     searchesUsed: 0,
                     lastSearchDate: serverNowTimestamp,
                     updatedAt: serverTimestamp()
+                }, { merge: true });
+            }
+            // If lastSearchDate absent/invalid (for old/corrupt users)
+            if (!lastSearchDateStr) {
+                userData.lastSearchDate = serverNowTimestamp;
+                await setDoc(userRef, {
+                    lastSearchDate: serverNowTimestamp
                 }, { merge: true });
             }
         } else {
@@ -1756,10 +1762,7 @@ async function updateSearchCount() {
     if (plan === 'monthly') return;
     const newCount = (userData.searchesUsed || 0) + 1;
     userData.searchesUsed = newCount;
-
-    // Always refresh server 'now' for new search for perfect accuracy
     await updateServerTimeCache();
-
     const userRef = doc(db, "users", currentUser.uid);
     await setDoc(userRef, {
         searchesUsed: newCount,
@@ -1848,7 +1851,7 @@ function displayResults() {
             <input type="checkbox" class="checkbox" onclick="event.stopPropagation();" onchange="toggleInterestFromCheckbox(${index}, this.checked)">
         </div>
         <div>${index + 1}</div>
-     <div class="interest-name">${escapeHtml(interest.name.replace(/\s*\(.*?\)\s*/g, '').trim())}</div>
+        <div class="interest-name">${escapeHtml(interest.name.replace(/\s*\(.*?\)\s*/g, '').trim())}</div>
         <div>${formatAudienceSize(interest.audience_size_lower_bound, interest.audience_size_upper_bound)}</div>
         <div>${interest.topic || 'N/A'}</div>
     </div>
@@ -1871,15 +1874,9 @@ function toggleInterestRow(index) {
         }
         const interest = allInterests[index];
         const row = document.querySelector(`[data-index="${index}"]`);
-        if (!row) {
-            console.error('Row not found for index:', index);
-            return;
-        }
+        if (!row) return;
         const checkbox = row.querySelector('.checkbox');
-        if (!checkbox) {
-            console.error('Checkbox not found for index:', index);
-            return;
-        }
+        if (!checkbox) return;
         checkbox.checked = !checkbox.checked;
         toggleInterestFromCheckbox(index, checkbox.checked);
     } catch (error) {
@@ -1891,16 +1888,11 @@ function toggleInterestRow(index) {
 // Toggle interest from checkbox
 function toggleInterestFromCheckbox(index, isChecked) {
     try {
-        if (index < 0 || index >= allInterests.length) {
-            console.error('Invalid index:', index);
-            return;
-        }
+        if (index < 0 || index >= allInterests.length) return;
         const interest = allInterests[index];
         if (isChecked) {
             const alreadyExists = selectedInterests.some(item => item.id === interest.id);
-            if (!alreadyExists) {
-                selectedInterests.push(interest);
-            }
+            if (!alreadyExists) selectedInterests.push(interest);
         } else {
             selectedInterests = selectedInterests.filter(item => item.id !== interest.id);
         }
@@ -1918,10 +1910,7 @@ function selectAll() {
         showToast('No interests found to select', 'error');
         return;
     }
-    const checkboxes = document.querySelectorAll('.checkbox');
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = true;
-    });
+    document.querySelectorAll('.checkbox').forEach(cb => cb.checked = true);
     selectedInterests = allInterests.map(i => ({ ...i }));
     updateSelectedList();
     showToast(`All ${allInterests.length} interests selected`);
@@ -1936,11 +1925,8 @@ function updateSelectedList() {
         const selectAllToggle = document.getElementById('selectAllToggle');
         if (selectAllCheckbox) selectAllCheckbox.checked = allSelected;
         if (selectAllToggle) {
-            if (allSelected) {
-                selectAllToggle.classList.add('active');
-            } else {
-                selectAllToggle.classList.remove('active');
-            }
+            if (allSelected) selectAllToggle.classList.add('active');
+            else selectAllToggle.classList.remove('active');
         }
         const masterCheckbox = document.getElementById('masterCheckbox');
         if (masterCheckbox) masterCheckbox.checked = allSelected;
@@ -1972,9 +1958,7 @@ function removeInterest(interestId) {
             const row = document.querySelector(`[data-index="${interestIndex}"]`);
             if (row) {
                 const checkbox = row.querySelector('.checkbox');
-                if (checkbox) {
-                    checkbox.checked = false;
-                }
+                if (checkbox) checkbox.checked = false;
             }
         }
         updateSelectedList();
@@ -1987,8 +1971,7 @@ function removeInterest(interestId) {
 
 // Clear selection
 function clearSelection() {
-    const checkboxes = document.querySelectorAll('.checkbox');
-    checkboxes.forEach(cb => cb.checked = false);
+    document.querySelectorAll('.checkbox').forEach(cb => cb.checked = false);
     selectedInterests = [];
     updateSelectedList();
     showToast('All selections cleared');
@@ -2044,6 +2027,7 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
 
+// ----- Event Listeners -----
 exploreBtn.addEventListener('click', searchInterests);
 searchInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') searchInterests();
@@ -2054,7 +2038,6 @@ copyBtn.addEventListener('click', copySelected);
 downloadBtn.addEventListener('click', downloadSelected);
 clearSelectedBtn.addEventListener('click', clearSelected);
 upgradeBtn.addEventListener('click', () => window.location.href = 'plans.html');
-
 profileBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     dropdown.classList.toggle('show');
@@ -2065,6 +2048,7 @@ document.addEventListener('click', (e) => {
     }
 });
 
+// Window/global functions for UI integration
 window.toggleInterestRow = toggleInterestRow;
 window.toggleInterestFromCheckbox = toggleInterestFromCheckbox;
 window.removeInterest = removeInterest;
@@ -2126,6 +2110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
 
 
 </script>
