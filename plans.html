@@ -951,9 +951,9 @@
 
     <!-- Complete JavaScript with Razorpay Integration -->
     <script type="module">
-     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 
 // ---------------------- CONFIG
@@ -974,7 +974,7 @@ const analytics = getAnalytics(app);
 const RAZORPAY_KEY = 'rzp_test_hLUFECdHvYfSm6';
 const PLAN_PRICES = { monthly: 499, yearly: 3499, lifetime: 9999 };
 
-// ------------- DOM Referencing
+// ---------------------- DOM Ref
 const profileBtn = document.getElementById('profileBtn');
 const dropdown = document.getElementById('dropdown');
 const themeToggleBtn = document.getElementById('themeToggleBtn');
@@ -984,27 +984,22 @@ const planBadge = document.getElementById('planBadge');
 const searchesLeft = document.getElementById('searchesLeft');
 const toast = document.getElementById('toast');
 
-// SVG string for Sun/Moon (add your full SVG if needed)
+// SVG ICONs
 const sunIcon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' ...%3E";
 const moonIcon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' ...%3E";
-// ---------------- Server Time Function (Always Use Server)
+
+// ---------------------- SERVER TIME हमेशा फेच करो
 async function getServerTimestamp() {
     const tempRef = doc(db, "getcurrenttime", "now");
-    await setDoc(tempRef, { realtime: serverTimestamp() });
+    await setDoc(tempRef, { realtime: serverTimestamp() }, {merge:true});
     const tempSnap = await getDoc(tempRef);
     if (tempSnap.exists() && tempSnap.data().realtime) {
         return tempSnap.data().realtime;
     }
     throw new Error('Server time fetch नहीं हुआ!');
 }
-// Date string formatter from Firestore Timestamp
-function toDateString(ts) {
-    if (!ts || typeof ts.seconds !== "number") return null;
-    try { return new Date(ts.seconds * 1000).toISOString().slice(0, 10); }
-    catch { return null; }
-}
 
-// ------------- Toast Message
+// Toast Popup
 function showToast(msg, type = 'success') {
     toast.textContent = msg;
     toast.className = `toast ${type}`;
@@ -1012,7 +1007,7 @@ function showToast(msg, type = 'success') {
     setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
-// ------------- Razorpay Payment Flow
+// ---------------------- RAZORPAY
 function createRazorpayOptions(amount, planType, userDetails) {
     return {
         key: RAZORPAY_KEY,
@@ -1032,7 +1027,7 @@ function createRazorpayOptions(amount, planType, userDetails) {
     };
 }
 
-// ---------------- План एक्टिवेशन/अपडेट — केवल सर्वर टाइम यूज़ करें
+// ---------------------- PAYMENT SUCCESS LOGIC (EXPIRY HANDLING MAIN LOGIC)
 async function handlePaymentSuccess(paymentResponse, planType) {
     try {
         showToast('Payment successful! Updating your plan...', 'success');
@@ -1042,16 +1037,17 @@ async function handlePaymentSuccess(paymentResponse, planType) {
         const userDoc = await getDoc(userDocRef);
         const currentData = userDoc.exists() ? userDoc.data() : {};
 
-        // सर्वर टाइम हमेशा ताजा निकालो
+        // Server se sahi time lao
         const serverNowTS = await getServerTimestamp();
         const serverNowDate = new Date(serverNowTS.seconds * 1000);
 
         let newPlanExpiry = null;
         const curExpiryTS = currentData.planExpiry;
-        let baseDate = serverNowDate;
+        let baseDate = serverNowDate;  // Default
 
         if (planType === 'monthly' || planType === 'yearly') {
             if (curExpiryTS && typeof curExpiryTS.seconds === "number") {
+                // Agar purana plan abhi bhi valid hai to wahi base bano
                 const expiryDate = new Date(curExpiryTS.seconds * 1000);
                 if (expiryDate > serverNowDate) baseDate = expiryDate;
             }
@@ -1061,7 +1057,7 @@ async function handlePaymentSuccess(paymentResponse, planType) {
 
         await updateDoc(userDocRef, {
             currentPlan: planType,
-            planExpiry: newPlanExpiry ? serverTimestamp() : null,
+            planExpiry: newPlanExpiry ? Timestamp.fromDate(newPlanExpiry) : null,  // सिर्फ expiry का Timestamp!
             searchesUsed: 0,
             lastSearchDate: null,
             paymentDetails: {
@@ -1081,7 +1077,7 @@ async function handlePaymentSuccess(paymentResponse, planType) {
     }
 }
 
-// ------------- Plan selection (Always check plan hierarchy)
+// ---------------------- Plan Select
 async function selectPlan(planType) {
     try {
         const user = auth.currentUser;
@@ -1110,7 +1106,7 @@ async function selectPlan(planType) {
     }
 }
 
-// ------------- Auth State Listener & Profile Load
+// ---------------------- AUTH LISTENER एंड प्रोफाइल लोड
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
         window.location.href = 'login.html';
@@ -1149,7 +1145,8 @@ async function loadUserProfile(user) {
                 searchesLeft.textContent = `${searchesRemaining}/3 searches`;
             }
         }
-        // प्रोफाइल इमेज/इनिशियल/ड्रापडाउन
+
+        // प्रोफाइल फोटो/इनिशियल
         const profileImage = document.getElementById('profileImage');
         const profileInitial = document.getElementById('profileInitial');
         const dropdownProfileImage = document.getElementById('dropdownProfileImage');
@@ -1157,7 +1154,7 @@ async function loadUserProfile(user) {
             profileImage.src = user.photoURL;
             profileImage.style.display = 'block';
             profileInitial.style.display = 'none';
-            dropdownProfileImage.src = user.photoURL;
+            if(dropdownProfileImage) dropdownProfileImage.src = user.photoURL;
         } else {
             profileInitial.textContent = user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U';
             profileImage.style.display = 'none';
@@ -1198,7 +1195,7 @@ function updatePlanDisplay(currentPlan) {
     });
 }
 
-// ------------- Logout Function
+// ---------------------- LOGOUT
 async function logout() {
     try {
         await signOut(auth);
@@ -1210,7 +1207,7 @@ async function logout() {
 window.selectPlan = selectPlan;
 window.logout = logout;
 
-// ------------- Theme Setup (Dark/Light)
+// ---------------------- THEME LOGIC
 document.addEventListener('DOMContentLoaded', () => {
     const darkStyle = document.getElementById("darkStyle");
     const lightStyle = document.getElementById("lightStyle");
@@ -1249,7 +1246,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // प्रोफाइल ड्रापडाउन टॉगल
     profileBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         dropdown.classList.toggle('show');
@@ -1260,7 +1256,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // प्लान बटन रीसेट
     document.querySelectorAll('.plan-btn').forEach(btn => {
         if (!btn.textContent.includes('Current')) {
             btn.setAttribute('data-original-text', btn.textContent);
@@ -1268,7 +1263,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// सिस्टम थीम ऑटो-डिटेक्ट
 if (window.matchMedia) {
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
         if (!localStorage.getItem('theme')) {
@@ -1276,6 +1270,7 @@ if (window.matchMedia) {
         }
     });
 }
+
 
     </script>
 </body>
