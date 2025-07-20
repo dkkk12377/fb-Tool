@@ -642,15 +642,18 @@
             margin: 0 auto;
         }
 
-        .plans-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+       .plans-grid {
+            display: flex;
+           flex-wrap: wrap;
+            justify-content: center;
             gap: 24px;
-            max-width: 1200px;
+            max-width: 1300px;
             margin: 0 auto;
         }
 
         .plan-card {
+            width: 290px;
+            flex-shrink: 0;
             background: #f7fafc;
             border: 1px solid #e2e8f0;
             border-radius: 12px;
@@ -660,7 +663,6 @@
             position: relative;
             overflow: hidden;
         }
-
         .plan-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
