@@ -1687,7 +1687,11 @@ async function loadUserData() {
                 createdAt: serverNowTimestamp,
                 updatedAt: serverNowTimestamp
             };
-            await setDoc(userRef, userData);
+             await setDoc(userRef, {
+                ...userData,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
         }
     } catch (error) {
         console.error("Error loading user data:", error);
