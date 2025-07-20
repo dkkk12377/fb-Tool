@@ -1171,31 +1171,44 @@ async function loadUserProfile(user) {
     }
 }
 
-function updatePlanDisplay(currentPlan) {
+function updatePlanDisplay(currentPlan, userData) {
+    // Important: Elements को यहां select करो
+    const planBadge = document.getElementById('planBadge');
+    const searchesLeft = document.getElementById('searchesLeft');
+    const expiryInfo = document.getElementById('expiryInfo');
+
     const planOrder = ['free', 'monthly', 'yearly', 'lifetime'];
     const currentIndex = planOrder.indexOf(currentPlan);
+
+    // Plan Name, Badge Update
     planBadge.textContent = currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1);
     planBadge.className = 'plan-badge ' + currentPlan;
+
+    // Searches Update
     searchesLeft.textContent = currentPlan === 'free' ? '3/day searches' : 'Unlimited searches';
 
-const expiryInfo = document.getElementById('expiryInfo');
+    // Expiry Logic
     const expiryTS = userData && userData.planExpiry ? userData.planExpiry : null;
     if (expiryTS && typeof expiryTS.seconds === "number") {
         const expiryDate = new Date(expiryTS.seconds * 1000);
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
         expiryInfo.textContent = `Expiry: ${expiryDate.toLocaleDateString(undefined, options)}`;
-        expiryInfo.style.display = 'block';
+        expiryInfo.style.display = 'inline-block';
     } else {
         expiryInfo.textContent = '';
         expiryInfo.style.display = 'none';
     }
+
+    // Plan Cards update (अगर आपके पास ऐसे elements हैं)
     document.querySelectorAll('.plan-card').forEach(card => {
         const planName = card.querySelector('.plan-name').textContent.toLowerCase();
         const button = card.querySelector('.plan-btn');
         const planIndex = planOrder.indexOf(planName);
+
         card.style.display = 'block';
         button.disabled = false;
         button.className = 'plan-btn';
+
         if (planName === currentPlan) {
             button.textContent = 'Current Plan';
             button.classList.add('current');
@@ -1210,6 +1223,7 @@ const expiryInfo = document.getElementById('expiryInfo');
         }
     });
 }
+
 
 // ---------------------- LOGOUT
 async function logout() {
