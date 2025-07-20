@@ -1142,7 +1142,8 @@ async function loadUserProfile(user) {
             updatePlanDisplay('free');
         } else {
             const userData = userDoc.data();
-            updatePlanDisplay(userData.currentPlan || 'free');
+            updatePlanDisplay(userData.currentPlan || 'free', userData);
+
             if (userData.currentPlan === 'free' || !userData.currentPlan) {
                 const searchesUsed = userData.searchesUsed || 0;
                 const searchesRemaining = Math.max(0, 3 - searchesUsed);
