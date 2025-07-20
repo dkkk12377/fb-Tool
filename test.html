@@ -1177,6 +1177,18 @@ function updatePlanDisplay(currentPlan) {
     planBadge.textContent = currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1);
     planBadge.className = 'plan-badge ' + currentPlan;
     searchesLeft.textContent = currentPlan === 'free' ? '3/day searches' : 'Unlimited searches';
+
+const expiryInfo = document.getElementById('expiryInfo');
+    const expiryTS = userData && userData.planExpiry ? userData.planExpiry : null;
+    if (expiryTS && typeof expiryTS.seconds === "number") {
+        const expiryDate = new Date(expiryTS.seconds * 1000);
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        expiryInfo.textContent = `Expiry: ${expiryDate.toLocaleDateString(undefined, options)}`;
+        expiryInfo.style.display = 'block';
+    } else {
+        expiryInfo.textContent = '';
+        expiryInfo.style.display = 'none';
+    }
     document.querySelectorAll('.plan-card').forEach(card => {
         const planName = card.querySelector('.plan-name').textContent.toLowerCase();
         const button = card.querySelector('.plan-btn');
@@ -1196,16 +1208,6 @@ function updatePlanDisplay(currentPlan) {
             button.classList.add(planName === 'monthly' ? 'primary' : 'secondary');
             button.onclick = () => selectPlan(planName);
         }
-const expiryInfo = document.getElementById('expiryInfo');
-const expiryDate = currentPlanExpiry ? new Date(currentPlanExpiry.seconds * 1000) : null;
-if (expiryDate) {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    expiryInfo.textContent = `Expiry: ${expiryDate.toLocaleDateString(undefined, options)}`;
-    expiryInfo.style.display = 'block';
-} else {
-    expiryInfo.textContent = '';
-    expiryInfo.style.display = 'none';
-}
     });
 }
 
